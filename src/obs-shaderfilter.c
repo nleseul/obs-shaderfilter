@@ -280,6 +280,11 @@ static obs_properties_t *shader_filter_properties(void *data)
 {
 	struct shader_filter_data *filter = data;
 
+	struct dstr examples_path = { 0 };
+	dstr_init(&examples_path);
+	dstr_cat(&examples_path, obs_get_module_data_path(obs_current_module()));
+	dstr_cat(&examples_path, "/examples");
+
 	obs_properties_t *props = obs_properties_create();
 	obs_properties_add_int(props, "expand_left", 
 		obs_module_text("ShaderFilter.ExpandLeft"), 0, 9999, 1);
@@ -302,7 +307,7 @@ static obs_properties_t *shader_filter_properties(void *data)
 
 	obs_properties_add_path(props, "shader_file_name", 
 		obs_module_text("ShaderFilter.ShaderFileName"), OBS_PATH_FILE, 
-		NULL, NULL);
+		NULL, examples_path.array);
 
 	obs_properties_add_button(props, "reload_effect", obs_module_text("ShaderFilter.ReloadEffect"),
 		shader_filter_reload_effect_clicked);
@@ -335,6 +340,8 @@ static obs_properties_t *shader_filter_properties(void *data)
 			break;
 		}
 	}
+
+	dstr_free(&examples_path);
 
 	return props;
 }
