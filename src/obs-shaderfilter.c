@@ -387,7 +387,7 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 	if (filter->effect != NULL)
 	{
 		if (!obs_source_process_filter_begin(filter->context, GS_RGBA,
-			OBS_ALLOW_DIRECT_RENDERING))
+			OBS_NO_DIRECT_RENDERING))
 			return;
 
 		gs_effect_set_vec2(filter->param_uv_scale, &filter->uv_scale);
