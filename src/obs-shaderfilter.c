@@ -1,4 +1,5 @@
 #include <obs-module.h>
+#include <util/base.h>
 #include <util/dstr.h>
 #include <util/platform.h>
 
@@ -118,8 +119,10 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 
 	if (filter->effect != NULL)
 	{
+		obs_enter_graphics();
 		gs_effect_destroy(filter->effect);
 		filter->effect = NULL;
+		obs_leave_graphics();
 	}
 
 	bool use_template = !obs_data_get_bool(settings, "override_entire_effect");
@@ -145,6 +148,11 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	obs_leave_graphics();
 
 	dstr_free(&effect_text);
+
+	if (filter->effect == NULL)
+	{
+		blog(LOG_WARNING, "[obs-shaderfilter] Unable to create effect. Errors returned from parser:\n%s", (errors == NULL || strlen(errors) == 0 ? "(None)" : errors));
+	}
 
 	da_free(filter->stored_param_list);
 	da_init(filter->stored_param_list);
@@ -179,14 +187,6 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 			cached_data->param = param;
 		}
 	}
-
-
-	/*filter->param_uv_offset = gs_effect_get_param_by_name(filter->effect,
-		"uv_offset");
-	filter->param_uv_scale = gs_effect_get_param_by_name(filter->effect,
-		"uv_scale");
-	filter->param_uv_pixel_interval = gs_effect_get_param_by_name(filter->effect,
-		"uv_pixel_interval");*/
 }
 
 static const char *shader_filter_get_name(void *unused)
@@ -388,11 +388,22 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 	{
 		if (!obs_source_process_filter_begin(filter->context, GS_RGBA,
 			OBS_NO_DIRECT_RENDERING))
+		{
 			return;
+		}
 
-		gs_effect_set_vec2(filter->param_uv_scale, &filter->uv_scale);
-		gs_effect_set_vec2(filter->param_uv_offset, &filter->uv_offset);
-		gs_effect_set_vec2(filter->param_uv_pixel_interval, &filter->uv_pixel_interval);
+		if (filter->param_uv_scale != NULL)
+		{
+			gs_effect_set_vec2(filter->param_uv_scale, &filter->uv_scale);
+		}
+		if (filter->param_uv_offset != NULL)
+		{
+			gs_effect_set_vec2(filter->param_uv_offset, &filter->uv_offset);
+		}
+		if (filter->param_uv_pixel_interval != NULL)
+		{
+			gs_effect_set_vec2(filter->param_uv_pixel_interval, &filter->uv_pixel_interval);
+		}
 
 		obs_source_process_filter_end(filter->context, filter->effect,
 			filter->total_width, filter->total_height);
