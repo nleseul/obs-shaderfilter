@@ -1,4 +1,6 @@
 #include <obs-module.h>
+#include <graphics/graphics.h>
+#include <graphics/image-file.h>
 #include <util/base.h>
 #include <util/dstr.h>
 #include <util/platform.h>
@@ -62,6 +64,14 @@ struct effect_param_data
 	struct dstr name;
 	enum gs_shader_param_type type;
 	gs_eparam_t *param;
+
+	gs_image_file_t *image;
+
+	union
+	{
+		long long i;
+		double f;
+	} value;
 };
 
 struct shader_filter_data 
@@ -152,6 +162,21 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	if (filter->effect == NULL)
 	{
 		blog(LOG_WARNING, "[obs-shaderfilter] Unable to create effect. Errors returned from parser:\n%s", (errors == NULL || strlen(errors) == 0 ? "(None)" : errors));
+	}
+
+	size_t param_count = filter->stored_param_list.num;
+	for (size_t param_index = 0; param_index < param_count; param_index++)
+	{
+		struct effect_param_data *param = (filter->stored_param_list.array + param_index);
+		if (param->image != NULL)
+		{
+			obs_enter_graphics();
+			gs_image_file_free(param->image);
+			obs_leave_graphics();
+
+			bfree(param->image);
+			param->image = NULL;
+		}
 	}
 
 	da_free(filter->stored_param_list);
@@ -248,6 +273,9 @@ static bool shader_filter_reload_effect_clicked(obs_properties_t *props, obs_pro
 	return false;
 }
 
+static const char *shader_filter_texture_file_filter =
+	"Textures (*.bmp *.tga *.png *.jpeg *.jpg *.gif);;";
+
 static obs_properties_t *shader_filter_properties(void *data)
 {
 	struct shader_filter_data *filter = data;
@@ -303,7 +331,7 @@ static obs_properties_t *shader_filter_properties(void *data)
 			obs_data_set_default_int(obs_source_get_settings(filter->context), param_name, 0xff000000);
 			break;
 		case GS_SHADER_PARAM_TEXTURE:
-			obs_properties_add_path(props, param_name, param_name, OBS_PATH_FILE, "", "");
+			obs_properties_add_path(props, param_name, param_name, OBS_PATH_FILE, shader_filter_texture_file_filter, NULL);
 			break;
 		}
 	}
@@ -327,25 +355,36 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 	{
 		struct effect_param_data *param = (filter->stored_param_list.array + param_index);
 		const char *param_name = param->name.array;
-		struct vec4 color;
 
 		switch (param->type)
 		{
 		case GS_SHADER_PARAM_BOOL:
-			gs_effect_set_bool(param->param, obs_data_get_bool(settings, param_name));
+			param->value.i = obs_data_get_bool(settings, param_name);
 			break;
 		case GS_SHADER_PARAM_FLOAT:
-			gs_effect_set_float(param->param, (float)obs_data_get_double(settings, param_name));
+			param->value.f = obs_data_get_double(settings, param_name);
 			break;
 		case GS_SHADER_PARAM_INT:
-			gs_effect_set_int(param->param, (int)obs_data_get_int(settings, param_name));
-			break;
-		case GS_SHADER_PARAM_VEC4:
-			vec4_from_rgba(&color, (int)obs_data_get_int(settings, param_name));
-			gs_effect_set_vec4(param->param, &color);
+		case GS_SHADER_PARAM_VEC4: // Assumed to be a color.
+			param->value.i = obs_data_get_int(settings, param_name);
 			break;
 		case GS_SHADER_PARAM_TEXTURE:
-			//obs_properties_add_path(props, param_name, param_name, OBS_PATH_FILE, "", "");
+			if (param->image == NULL)
+			{
+				param->image = bzalloc(sizeof(gs_image_file_t));
+			}
+			else
+			{
+				obs_enter_graphics();
+				gs_image_file_free(param->image);
+				obs_leave_graphics();
+			}
+
+			gs_image_file_init(param->image, obs_data_get_string(settings, param_name));
+
+			obs_enter_graphics();
+			gs_image_file_init_texture(param->image);
+			obs_leave_graphics();
 			break;
 		}
 	}
@@ -403,6 +442,33 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 		if (filter->param_uv_pixel_interval != NULL)
 		{
 			gs_effect_set_vec2(filter->param_uv_pixel_interval, &filter->uv_pixel_interval);
+		}
+
+		size_t param_count = filter->stored_param_list.num;
+		for (size_t param_index = 0; param_index < param_count; param_index++)
+		{
+			struct effect_param_data *param = (filter->stored_param_list.array + param_index);
+			struct vec4 color;
+
+			switch (param->type)
+			{
+			case GS_SHADER_PARAM_BOOL:
+				gs_effect_set_bool(param->param, param->value.i);
+				break;
+			case GS_SHADER_PARAM_FLOAT:
+				gs_effect_set_float(param->param, (float)param->value.f);
+				break;
+			case GS_SHADER_PARAM_INT:
+				gs_effect_set_int(param->param, (int)param->value.i);
+				break;
+			case GS_SHADER_PARAM_VEC4:
+				vec4_from_rgba(&color, (unsigned int)param->value.i);
+				gs_effect_set_vec4(param->param, &color);
+				break;
+			case GS_SHADER_PARAM_TEXTURE:
+				gs_effect_set_texture(param->param, (param->image ? param->image->texture : NULL));
+				break;
+			}
 		}
 
 		obs_source_process_filter_end(filter->context, filter->effect,
