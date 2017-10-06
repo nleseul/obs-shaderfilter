@@ -14,6 +14,7 @@ static const char *effect_template_begin =
 uniform float4x4 ViewProj;\
 uniform texture2d image;\
 \
+uniform float elapsed_time;\
 uniform float2 uv_offset;\
 uniform float2 uv_scale;\
 uniform float2 uv_pixel_interval;\
@@ -83,6 +84,7 @@ struct shader_filter_data
 	gs_eparam_t *param_uv_offset;
 	gs_eparam_t *param_uv_scale;
 	gs_eparam_t *param_uv_pixel_interval;
+	gs_eparam_t *param_elapsed_time;
 
 	int expand_left;
 	int expand_right;
@@ -95,6 +97,7 @@ struct shader_filter_data
 	struct vec2 uv_offset;
 	struct vec2 uv_scale;
 	struct vec2 uv_pixel_interval;
+	float elapsed_time;
 
 	DARRAY(struct effect_param_data) stored_param_list;
 };
@@ -105,6 +108,38 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 {
 	obs_data_t *settings = obs_source_get_settings(filter->context);
 
+	// First, clean up the old effect and all references to it. 
+	size_t param_count = filter->stored_param_list.num;
+	for (size_t param_index = 0; param_index < param_count; param_index++)
+	{
+		struct effect_param_data *param = (filter->stored_param_list.array + param_index);
+		if (param->image != NULL)
+		{
+			obs_enter_graphics();
+			gs_image_file_free(param->image);
+			obs_leave_graphics();
+
+			bfree(param->image);
+			param->image = NULL;
+		}
+	}
+
+	da_free(filter->stored_param_list);
+
+	filter->param_elapsed_time = NULL;
+	filter->param_uv_offset = NULL;
+	filter->param_uv_pixel_interval = NULL;
+	filter->param_uv_scale = NULL;
+
+	if (filter->effect != NULL)
+	{
+		obs_enter_graphics();
+		gs_effect_destroy(filter->effect);
+		filter->effect = NULL;
+		obs_leave_graphics();
+	}
+
+	// Load text and build the effect from the template, if necessary. 
 	const char *shader_text = NULL;
 
 	if (obs_data_get_bool(settings, "from_file"))
@@ -127,14 +162,6 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	size_t effect_footer_length = strlen(effect_template_end);
 	size_t effect_buffer_total_size = effect_header_length + effect_body_length + effect_footer_length;
 
-	if (filter->effect != NULL)
-	{
-		obs_enter_graphics();
-		gs_effect_destroy(filter->effect);
-		filter->effect = NULL;
-		obs_leave_graphics();
-	}
-
 	bool use_template = !obs_data_get_bool(settings, "override_entire_effect");
 
 	struct dstr effect_text = { 0 };
@@ -151,6 +178,7 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 		dstr_cat(&effect_text, effect_template_end);
 	}
 
+	// Create the effect. 
 	char *errors = NULL;
 
 	obs_enter_graphics();
@@ -164,22 +192,7 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 		blog(LOG_WARNING, "[obs-shaderfilter] Unable to create effect. Errors returned from parser:\n%s", (errors == NULL || strlen(errors) == 0 ? "(None)" : errors));
 	}
 
-	size_t param_count = filter->stored_param_list.num;
-	for (size_t param_index = 0; param_index < param_count; param_index++)
-	{
-		struct effect_param_data *param = (filter->stored_param_list.array + param_index);
-		if (param->image != NULL)
-		{
-			obs_enter_graphics();
-			gs_image_file_free(param->image);
-			obs_leave_graphics();
-
-			bfree(param->image);
-			param->image = NULL;
-		}
-	}
-
-	da_free(filter->stored_param_list);
+	// Store references to the new effect's parameters. 
 	da_init(filter->stored_param_list);
 	size_t effect_count = gs_effect_get_num_params(filter->effect);
 	for (size_t effect_index = 0; effect_index < effect_count; effect_index++)
@@ -199,6 +212,10 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 		else if (strcmp(info.name, "uv_pixel_interval") == 0)
 		{
 			filter->param_uv_pixel_interval = param;
+		}
+		else if (strcmp(info.name, "elapsed_time") == 0)
+		{
+			filter->param_elapsed_time = param;
 		}
 		else if (strcmp(info.name, "ViewProj") == 0 || strcmp(info.name, "image") == 0)
 		{
@@ -422,6 +439,8 @@ static void shader_filter_tick(void *data, float seconds)
 	filter->uv_pixel_interval.x = 1.0f / base_width;
 	filter->uv_pixel_interval.y = 1.0f / base_height;
 
+	filter->elapsed_time += seconds;
+
 }
 
 static void shader_filter_render(void *data, gs_effect_t *effect)
@@ -449,6 +468,10 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 		if (filter->param_uv_pixel_interval != NULL)
 		{
 			gs_effect_set_vec2(filter->param_uv_pixel_interval, &filter->uv_pixel_interval);
+		}
+		if (filter->param_elapsed_time != NULL)
+		{
+			gs_effect_set_float(filter->param_elapsed_time, filter->elapsed_time);
 		}
 
 		size_t param_count = filter->stored_param_list.num;
