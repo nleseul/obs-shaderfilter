@@ -11,7 +11,6 @@ float4 mainImage(VertData v_in) : TARGET
     float4 color = image.Sample(textureSampler, v_in.uv);
     float2 shadow_uv = float2(v_in.uv.x - uv_pixel_interval.x * shadow_offset_x, 
                               v_in.uv.y - uv_pixel_interval.y * shadow_offset_y);
-    float4 shadow_alpha = 0;
     
     float4 sampled_shadow_color = float4(0, 0, 0, 0);
     
@@ -26,5 +25,5 @@ float4 mainImage(VertData v_in) : TARGET
     
     float4 final_shadow_color = float4(shadow_color.r, shadow_color.g, shadow_color.b, shadow_color.a * sampled_shadow_color.a);
     
-    return final_shadow_color * (1-color.a) + color /** color.a*/;
+    return final_shadow_color * (1-color.a) + color;
 }
