@@ -1,0 +1,54 @@
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float2 elapsed_time;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
+uniform float2 uv_pixel_interval;
+
+uniform float speed;
+uniform float min_growth_pixels;
+uniform float max_growth_pixels;
+
+sampler_state textureSampler {
+	Filter    = Linear;
+	AddressU  = Border;
+	AddressV  = Border;
+	BorderColor = 00000000;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+VertData mainTransform(VertData v_in)
+{
+	VertData vert_out;
+
+	float3 pos = v_in.pos.xyz;
+	float3 direction_from_center = float3((v_in.uv.x - 0.5) * uv_pixel_interval.y / uv_pixel_interval.x, v_in.uv.y - 0.5, 0);
+	float3 min_pos = pos + direction_from_center * min_growth_pixels / 2;
+	float3 max_pos = pos + direction_from_center * max_growth_pixels / 2;
+
+	float t = (1 + sin(elapsed_time * speed)) / 2;
+	float3 current_pos = min_pos * (1 - t) + max_pos * t;
+
+	vert_out.pos = mul(float4(current_pos, 1.0), ViewProj);
+	vert_out.uv = v_in.uv * uv_scale + uv_offset;
+	return vert_out;
+}
+
+float4 mainImage(VertData v_in) : TARGET
+{
+	return image.Sample(textureSampler, v_in.uv);
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = mainTransform(v_in);
+		pixel_shader  = mainImage(v_in);
+	}
+}
