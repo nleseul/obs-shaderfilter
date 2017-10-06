@@ -341,7 +341,7 @@ static obs_properties_t *shader_filter_properties(void *data)
 			obs_properties_add_bool(props, param_name, param_name);
 			break;
 		case GS_SHADER_PARAM_FLOAT:
-			obs_properties_add_float(props, param_name, param_name, FLT_MIN, FLT_MAX, 1);
+			obs_properties_add_float(props, param_name, param_name, -FLT_MAX, FLT_MAX, 1);
 			break;
 		case GS_SHADER_PARAM_INT:
 			obs_properties_add_int(props, param_name, param_name, INT_MIN, INT_MAX, 1);
