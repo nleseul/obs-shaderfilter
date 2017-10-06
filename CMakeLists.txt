@@ -39,3 +39,7 @@ add_library (libobs SHARED IMPORTED)
 set_property (TARGET libobs PROPERTY IMPORTED_LOCATION ${OBS_LIB_DIR}/obs.dll)
 set_property (TARGET libobs PROPERTY IMPORTED_IMPLIB ${OBS_LIB_DIR}/obs.lib)
 target_link_libraries (${PROJECT_NAME} libobs)
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION obs-plugins/${_lib_suffix}bit)
+install(FILES ${CMAKE_BINARY_DIR}/Debug/${PROJECT_NAME}.pdb DESTINATION obs-plugins/${_lib_suffix}bit CONFIGURATIONS Debug)
+install(DIRECTORY data/ DESTINATION data/obs-plugins/${PROJECT_NAME}/)
