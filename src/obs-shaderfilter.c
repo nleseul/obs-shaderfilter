@@ -77,9 +77,12 @@ struct effect_param_data
 
 struct shader_filter_data 
 {
-
 	obs_source_t *context;
 	gs_effect_t *effect;
+
+	bool reload_effect;
+	struct dstr last_path;
+	bool last_from_file;
 
 	gs_eparam_t *param_uv_offset;
 	gs_eparam_t *param_uv_scale;
@@ -243,12 +246,15 @@ static void *shader_filter_create(obs_data_t *settings, obs_source_t *source)
 
 	struct shader_filter_data *filter = bzalloc(sizeof(struct shader_filter_data));
 	filter->context = source;
+	filter->reload_effect = true;
+
+	dstr_init(&filter->last_path);
+	dstr_copy(&filter->last_path, obs_data_get_string(settings, "shader_file_name"));
+	filter->last_from_file = obs_data_get_bool(settings, "from_file");
 
 	da_init(filter->stored_param_list);
 
 	obs_source_update(source, settings);
-
-	shader_filter_reload_effect(filter);
 
 	return filter;
 }
@@ -257,6 +263,7 @@ static void shader_filter_destroy(void *data)
 {
 	struct shader_filter_data *filter = data;
 
+	dstr_free(&filter->last_path);
 	da_free(filter->stored_param_list);
 
 	bfree(filter);
@@ -265,28 +272,45 @@ static void shader_filter_destroy(void *data)
 static bool shader_filter_from_file_changed(obs_properties_t *props,
 	obs_property_t *p, obs_data_t *settings)
 {
+	struct shader_filter_data *filter = obs_properties_get_param(props);
+
 	bool from_file = obs_data_get_bool(settings, "from_file");
 
-	obs_property_t *shader_text = obs_properties_get(props, "shader_text");
-	obs_property_t *shader_file_name = obs_properties_get(props, "shader_file_name");
+	obs_property_set_visible(obs_properties_get(props, "shader_text"), !from_file);
+	obs_property_set_visible(obs_properties_get(props, "shader_file_name"), from_file);
 
-	obs_property_set_visible(shader_text, !from_file);
-	obs_property_set_visible(shader_file_name, from_file);
+	if (from_file != filter->last_from_file)
+	{
+		filter->reload_effect = true;
+	}
+	filter->last_from_file = from_file;
 
 	return true;
+}
+
+static bool shader_filter_file_name_changed(obs_properties_t *props,
+	obs_property_t *p, obs_data_t *settings)
+{
+	struct shader_filter_data *filter = obs_properties_get_param(props);
+	const char *new_file_name = obs_data_get_string(settings, obs_property_name(p));
+
+	if (dstr_is_empty(&filter->last_path) || dstr_cmp(&filter->last_path, new_file_name) != 0)
+	{
+		filter->reload_effect = true;
+		dstr_copy(&filter->last_path, new_file_name);
+	}
+
+	return false;
 }
 
 static bool shader_filter_reload_effect_clicked(obs_properties_t *props, obs_property_t *property, void *data)
 {
 	struct shader_filter_data *filter = data;
 
-	shader_filter_reload_effect(filter);
-	obs_source_update_properties(filter->context);
+	filter->reload_effect = true;
+
 	obs_source_update(filter->context, NULL);
 
-	// Note that it's important we not tell the window to refresh with the return
-	// value here, as the window will already have been potentially recreated by
-	// the update_properties signal sent to it above. 
 	return false;
 }
 
@@ -303,6 +327,9 @@ static obs_properties_t *shader_filter_properties(void *data)
 	dstr_cat(&examples_path, "/examples");
 
 	obs_properties_t *props = obs_properties_create();
+
+	obs_properties_set_param(props, filter, NULL);
+
 	obs_properties_add_int(props, "expand_left", 
 		obs_module_text("ShaderFilter.ExpandLeft"), 0, 9999, 1);
 	obs_properties_add_int(props, "expand_right", 
@@ -322,9 +349,10 @@ static obs_properties_t *shader_filter_properties(void *data)
 	obs_properties_add_text(props, "shader_text", 
 		obs_module_text("ShaderFilter.ShaderText"), OBS_TEXT_MULTILINE);
 
-	obs_properties_add_path(props, "shader_file_name", 
+	obs_property_t *file_name = obs_properties_add_path(props, "shader_file_name", 
 		obs_module_text("ShaderFilter.ShaderFileName"), OBS_PATH_FILE, 
 		NULL, examples_path.array);
+	obs_property_set_modified_callback(file_name, shader_filter_file_name_changed);
 
 	obs_properties_add_button(props, "reload_effect", obs_module_text("ShaderFilter.ReloadEffect"),
 		shader_filter_reload_effect_clicked);
@@ -348,9 +376,6 @@ static obs_properties_t *shader_filter_properties(void *data)
 			break;
 		case GS_SHADER_PARAM_VEC4:
 			obs_properties_add_color(props, param_name, param_name);
-
-			// Hack to ensure we have a default...
-			obs_data_set_default_int(obs_source_get_settings(filter->context), param_name, 0xff000000);
 			break;
 		case GS_SHADER_PARAM_TEXTURE:
 			obs_properties_add_path(props, param_name, param_name, OBS_PATH_FILE, shader_filter_texture_file_filter, NULL);
@@ -374,6 +399,13 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 	filter->expand_top = (int)obs_data_get_int(settings, "expand_top");
 	filter->expand_bottom = (int)obs_data_get_int(settings, "expand_bottom");
 
+	if (filter->reload_effect)
+	{
+		filter->reload_effect = false;
+		shader_filter_reload_effect(filter);
+		obs_source_update_properties(filter->context);
+	}
+
 	size_t param_count = filter->stored_param_list.num;
 	for (size_t param_index = 0; param_index < param_count; param_index++)
 	{
@@ -389,7 +421,13 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 			param->value.f = obs_data_get_double(settings, param_name);
 			break;
 		case GS_SHADER_PARAM_INT:
+			param->value.i = obs_data_get_int(settings, param_name);
+			break;
 		case GS_SHADER_PARAM_VEC4: // Assumed to be a color.
+
+			// Hack to ensure we have a default...
+			obs_data_set_default_int(settings, param_name, 0xff000000);
+
 			param->value.i = obs_data_get_int(settings, param_name);
 			break;
 		case GS_SHADER_PARAM_TEXTURE:
