@@ -311,7 +311,7 @@ static bool shader_filter_reload_effect_clicked(obs_properties_t *props, obs_pro
 
 	obs_source_update(filter->context, NULL);
 
-	return false;
+	return true;
 }
 
 static const char *shader_filter_texture_file_filter =
