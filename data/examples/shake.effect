@@ -1,0 +1,89 @@
+// Added some randomization based upon random_scale input  
+// keep the random_scale low for small (0.2-1) for small jerky movements and larger for less often big jumps
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float2 elapsed_time;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
+uniform float2 uv_pixel_interval;
+uniform float random_scale;
+
+uniform bool worble;
+uniform float speed;
+uniform float min_growth_pixels;
+uniform float max_growth_pixels;
+
+sampler_state textureSampler {
+	Filter    = Linear;
+	AddressU  = Border;
+	AddressV  = Border;
+	BorderColor = 00000000;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+//noise values in range if 0.0 to 1.0
+
+float fract(float v)
+{
+  return v - floor(v);
+}
+
+float noise3D(float x, float y, float z) {
+    float ptr = 0.0f;
+    return frac(sin(x*112.9898f + y*179.233f + z*237.212f) * 43758.5453f);
+}
+
+VertData mainTransform(VertData v_in)
+{
+	VertData vert_out;
+
+	float3 pos = v_in.pos.xyz;
+	float t = (1 + sin(elapsed_time * speed)) / 2;
+	float s = (1 + cos(elapsed_time * speed)) / 2;
+	float noise = clamp(noise3D(t,s,100) * random_scale,-0.99, 0.99);
+
+	float3 direction_from_center = float3((v_in.uv.x - 0.5 + noise) * uv_pixel_interval.y / uv_pixel_interval.x, v_in.uv.y - 0.5 + noise, 1);
+	float3 min_pos = pos + direction_from_center * min_growth_pixels / 2;
+	float3 max_pos = pos + direction_from_center * max_growth_pixels / 2;
+
+	float3 current_pos = min_pos * (1 - t) + max_pos * t;
+	//current_pos.x = v_in.pos.x + (t * min_pos.x);
+	current_pos.y = (min_pos.y * (1 - s) + max_pos.y * s);
+	//current_pos.y = v_in.pos.y + (s * min_pos.y);
+	//current_pos.z = min_pos.z * (1 - s) + max_pos.z * s;
+
+	float2 offset = uv_offset;
+	offset.x = uv_offset.x * (1 - t + noise);
+	offset.y = uv_offset.y * (1 - s + noise);
+
+	if (worble)
+	{
+		vert_out.pos = mul(float4(current_pos, 1  ), ViewProj);
+	}
+	else
+	{
+		vert_out.pos = mul(float4(pos, 1  ), ViewProj);
+	}
+	vert_out.uv = v_in.uv * uv_scale  + offset;
+	return vert_out;
+}
+
+float4 mainImage(VertData v_in) : TARGET
+{
+	return image.Sample(textureSampler, v_in.uv);
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = mainTransform(v_in);
+		pixel_shader  = mainImage(v_in);
+	}
+}
