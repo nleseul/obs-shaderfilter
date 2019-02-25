@@ -1,6 +1,10 @@
+// Version 1.1 by Charles Fettinger https://github.com/Oncorporation/obs-shaderfilter
+// original version by nleseul https://github.com/nleseul/obs-shaderfilter
 #include <obs-module.h>
 #include <graphics/graphics.h>
 #include <graphics/image-file.h>
+#include <graphics/math-extra.h>
+
 #include <util/base.h>
 #include <util/dstr.h>
 #include <util/platform.h>
@@ -18,6 +22,7 @@ uniform float elapsed_time;\
 uniform float2 uv_offset;\
 uniform float2 uv_scale;\
 uniform float2 uv_pixel_interval;\
+uniform float rand_f;\
 \
 sampler_state textureSampler{\
 	Filter = Linear;\
@@ -75,7 +80,7 @@ struct effect_param_data
 	} value;
 };
 
-struct shader_filter_data 
+struct shader_filter_data
 {
 	obs_source_t *context;
 	gs_effect_t *effect;
@@ -88,6 +93,7 @@ struct shader_filter_data
 	gs_eparam_t *param_uv_scale;
 	gs_eparam_t *param_uv_pixel_interval;
 	gs_eparam_t *param_elapsed_time;
+	gs_eparam_t *param_rand_f;
 
 	int expand_left;
 	int expand_right;
@@ -101,6 +107,7 @@ struct shader_filter_data
 	struct vec2 uv_scale;
 	struct vec2 uv_pixel_interval;
 	float elapsed_time;
+	float rand_f;
 
 	DARRAY(struct effect_param_data) stored_param_list;
 };
@@ -133,6 +140,7 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	filter->param_uv_offset = NULL;
 	filter->param_uv_pixel_interval = NULL;
 	filter->param_uv_scale = NULL;
+	filter->param_rand_f = NULL;
 
 	if (filter->effect != NULL)
 	{
@@ -219,6 +227,10 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 		else if (strcmp(info.name, "elapsed_time") == 0)
 		{
 			filter->param_elapsed_time = param;
+		}
+		else if (strcmp(info.name, "rand_f") == 0)
+		{
+			filter->param_rand_f = param;
 		}
 		else if (strcmp(info.name, "ViewProj") == 0 || strcmp(info.name, "image") == 0)
 		{
@@ -315,7 +327,7 @@ static bool shader_filter_reload_effect_clicked(obs_properties_t *props, obs_pro
 }
 
 static const char *shader_filter_texture_file_filter =
-	"Textures (*.bmp *.tga *.png *.jpeg *.jpg *.gif);;";
+"Textures (*.bmp *.tga *.png *.jpeg *.jpg *.gif);;";
 
 static obs_properties_t *shader_filter_properties(void *data)
 {
@@ -330,13 +342,13 @@ static obs_properties_t *shader_filter_properties(void *data)
 
 	obs_properties_set_param(props, filter, NULL);
 
-	obs_properties_add_int(props, "expand_left", 
+	obs_properties_add_int(props, "expand_left",
 		obs_module_text("ShaderFilter.ExpandLeft"), 0, 9999, 1);
-	obs_properties_add_int(props, "expand_right", 
+	obs_properties_add_int(props, "expand_right",
 		obs_module_text("ShaderFilter.ExpandRight"), 0, 9999, 1);
-	obs_properties_add_int(props, "expand_top", 
+	obs_properties_add_int(props, "expand_top",
 		obs_module_text("ShaderFilter.ExpandTop"), 0, 9999, 1);
-	obs_properties_add_int(props, "expand_bottom", 
+	obs_properties_add_int(props, "expand_bottom",
 		obs_module_text("ShaderFilter.ExpandBottom"), 0, 9999, 1);
 
 	obs_properties_add_bool(props, "override_entire_effect",
@@ -346,11 +358,11 @@ static obs_properties_t *shader_filter_properties(void *data)
 		obs_module_text("ShaderFilter.LoadFromFile"));
 	obs_property_set_modified_callback(from_file, shader_filter_from_file_changed);
 
-	obs_properties_add_text(props, "shader_text", 
+	obs_properties_add_text(props, "shader_text",
 		obs_module_text("ShaderFilter.ShaderText"), OBS_TEXT_MULTILINE);
 
-	obs_property_t *file_name = obs_properties_add_path(props, "shader_file_name", 
-		obs_module_text("ShaderFilter.ShaderFileName"), OBS_PATH_FILE, 
+	obs_property_t *file_name = obs_properties_add_path(props, "shader_file_name",
+		obs_module_text("ShaderFilter.ShaderFileName"), OBS_PATH_FILE,
 		NULL, examples_path.array);
 	obs_property_set_modified_callback(file_name, shader_filter_file_name_changed);
 
@@ -452,6 +464,24 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 	}
 }
 
+static unsigned int rand_interval(unsigned int min, unsigned int max)
+{
+	unsigned int r;
+	const unsigned int range = 1 + max - min;
+	const unsigned int buckets = RAND_MAX / range;
+	const unsigned int limit = buckets * range;
+
+	/* Create equal size buckets all in a row, then fire randomly towards
+	 * the buckets until you land in one of them. All buckets are equally
+	 * likely. If you land off the end of the line of buckets, try again. */
+	do
+	{
+		r = rand();
+	} while (r >= limit);
+
+	return min + (r / buckets);
+}
+
 static void shader_filter_tick(void *data, float seconds)
 {
 	struct shader_filter_data *filter = data;
@@ -479,7 +509,9 @@ static void shader_filter_tick(void *data, float seconds)
 
 	filter->elapsed_time += seconds;
 
+	filter->rand_f = (float)((double)rand_interval(0, 10000) / (double)10000); //rand_float(1); 
 }
+
 
 static void shader_filter_render(void *data, gs_effect_t *effect)
 {
@@ -510,6 +542,10 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 		if (filter->param_elapsed_time != NULL)
 		{
 			gs_effect_set_float(filter->param_elapsed_time, filter->elapsed_time);
+		}
+		if (filter->param_rand_f != NULL)
+		{
+			gs_effect_set_float(filter->param_rand_f, filter->rand_f);
 		}
 
 		size_t param_count = filter->stored_param_list.num;
@@ -561,23 +597,23 @@ static uint32_t shader_filter_getheight(void *data)
 
 static void shader_filter_defaults(obs_data_t *settings)
 {
-	obs_data_set_default_string(settings, "shader_text", 
+	obs_data_set_default_string(settings, "shader_text",
 		effect_template_default_image_shader);
 }
 
 struct obs_source_info shader_filter = {
-	.id             = "shader_filter",
-	.type           = OBS_SOURCE_TYPE_FILTER,
-	.output_flags   = OBS_SOURCE_VIDEO,
-	.create         = shader_filter_create,
-	.destroy        = shader_filter_destroy,
-	.update         = shader_filter_update,
-	.video_tick		= shader_filter_tick,
-	.get_name       = shader_filter_get_name,
-	.get_defaults   = shader_filter_defaults,
-	.get_width      = shader_filter_getwidth,
-	.get_height     = shader_filter_getheight,
-	.video_render   = shader_filter_render,
+	.id = "shader_filter",
+	.type = OBS_SOURCE_TYPE_FILTER,
+	.output_flags = OBS_SOURCE_VIDEO,
+	.create = shader_filter_create,
+	.destroy = shader_filter_destroy,
+	.update = shader_filter_update,
+	.video_tick = shader_filter_tick,
+	.get_name = shader_filter_get_name,
+	.get_defaults = shader_filter_defaults,
+	.get_width = shader_filter_getwidth,
+	.get_height = shader_filter_getheight,
+	.video_render = shader_filter_render,
 	.get_properties = shader_filter_properties
 };
 

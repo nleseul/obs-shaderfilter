@@ -1,5 +1,6 @@
 // Added some randomization based upon random_scale input  
 // keep the random_scale low for small (0.2-1) for small jerky movements and larger for less often big jumps
+// updated for latest version of obs-shaderfilter
 
 uniform float4x4 ViewProj;
 uniform texture2d image;
@@ -8,12 +9,14 @@ uniform float2 elapsed_time;
 uniform float2 uv_offset;
 uniform float2 uv_scale;
 uniform float2 uv_pixel_interval;
-uniform float random_scale;
+uniform float rand_f;
 
+uniform float random_scale;
 uniform bool worble;
 uniform float speed;
 uniform float min_growth_pixels;
 uniform float max_growth_pixels;
+uniform bool randomize_movement;
 
 sampler_state textureSampler {
 	Filter    = Linear;
@@ -44,9 +47,21 @@ VertData mainTransform(VertData v_in)
 	VertData vert_out;
 
 	float3 pos = v_in.pos.xyz;
-	float t = (1 + sin(elapsed_time * speed)) / 2;
-	float s = (1 + cos(elapsed_time * speed)) / 2;
-	float noise = clamp(noise3D(t,s,100) * random_scale,-0.99, 0.99);
+	float t;
+	float s;
+	float noise;
+	if (randomize)
+	{
+		t = rand_f;
+		s = rand_f;
+		noise = clamp( rand_f * random_scale,-0.99, 0.99);
+	}
+	else
+	{
+		t = (1 + sin(elapsed_time * speed)) / 2;
+		s = (1 + cos(elapsed_time * speed)) / 2;
+		noise = clamp(noise3D(t,s,100) * random_scale,-0.99, 0.99);
+	}
 
 	float3 direction_from_center = float3((v_in.uv.x - 0.5 + noise) * uv_pixel_interval.y / uv_pixel_interval.x, v_in.uv.y - 0.5 + noise, 1);
 	float3 min_pos = pos + direction_from_center * min_growth_pixels / 2;

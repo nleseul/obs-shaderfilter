@@ -75,6 +75,7 @@ handle these variables being missing, but the shader may malfunction.)
   the source or the output of the previous filter in the chain. (Standard for all OBS filters.)
 * **`elapsed_time`** (`float`)&mdash;The time in seconds which has elapsed since the filter was created. Useful for 
   creating animations. 
+* **`rand_f`** (`float`)&mdash; a random float between 0 and 1. 
 * **`uv_offset`** (`float2`)&mdash;The offset which should be applied to the UV coordinates of the vertices. This is
   used in the standard vertex shader to draw extra pixels on the borders of the source.
 * **`uv_scale`** (`float2`)&mdash;The scale which should be applied to the UV coordinates of the vertices. This is 
@@ -96,12 +97,16 @@ loaded.
 * *drop_shadow.shader*&mdash;A shader that adds a basic drop shadow to the input. Note that this is done with a simple
   uniform blur, so it won't look quite as good as a proper Gaussian blur. This is also an O(N&sup2;) blur on the size 
   of the blur, so be very conscious of your GPU usage with a large blur size.
+* *edge_detection.shader*&mdash;A shader that detects edges of color. Includes support for alpha channels.   
 * *filter_template.effect* (Overrides entire effect)&mdash;A copy of the default effect used by the plugin, which simply
   renders the input directly to the output after scaling UVs to reflect any extra border pixels. This is useful as a starting
   point for developing new effects, especially those that might need a custom vertex shader. (Note that modifying this file will
   not affect the internal effect template used by the plugin.)
+* *luminance.shader*&mdash;A shader that adds an alpha layer based on brightness instead of color. Extremely useful for making live 
+  video special effects, like replacing backgrounds or foregrounds.
 * *multiply.shader*&mdash;A shader that multiplies the input by another image specified in the parameters. Demonstrates the use 
   of user-defined `texture2d` parameters.
+* *perlin_noise.effect* (Overrides entire effect)&mdash;An effect generates perlin_noise, used to make water, clouds and glitch effects. 
 * *pulse.effect* (Overrides entire effect)&mdash;An effect that varies the size of the output over time. This demonstrates 
   a custom vertex shader that manipulates the position of the rendered vertices based on user data. Note that moving the vertices 
   in the vertex shader will not affect the logical size of the source in OBS, and this may mean that pixels outside the source's
@@ -110,15 +115,18 @@ loaded.
   Pixels inside the bounds of the input are treated as solid; pixels outside are treated as opaque. The complexity of the blur
   does not increase with its size, so you should be able to make your blur size as large as you like wtihout affecting
   GPU load. 
+* *repeat.effect* (Overrides entire effect)&mdash;duplicates the input video as many times as you like and organizes on the screen.
 * *rounded_rect.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded 
   edges.
-
+* *scan_line.effect* (Overrides entire effect)&mdash;An effect that creates old style tv scan lines, for glitch style effects. 
+* *shake.effect* (Overrides entire effect)&mdash;creates random screen glitch style shake. Keep the random_scale low for small (0.2-1) for small
+  jerky movements and larger for less often big jumps.
 ## Building
 
 If you wish to build the obs-shaderfilter plugin from source, you should just need [CMake](https://cmake.org/) 
 and the OBS Studio libraries and headers.
 
-* [obs-shaderfilter source repository](https://github.com/nleseul/obs-shaderfilter)
+* [obs-shaderfilter source repository](https://github.com/Oncorporation/obs-shaderfilter)
 * [OBS Studio source repository](https://github.com/jp9000/obs-studio)
 
 I don't believe that the OBS project provides prebuilt libraries; you're probably going to have the best luck
