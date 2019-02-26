@@ -1,6 +1,7 @@
 // Added some randomization based upon random_scale input  
 // keep the random_scale low for small (0.2-1) for small jerky movements and larger for less often big jumps
 // updated for latest version of obs-shaderfilter
+// by Charles Fettinger (https://github.com/Oncorporation)
 
 uniform float4x4 ViewProj;
 uniform texture2d image;
