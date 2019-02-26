@@ -52,7 +52,7 @@ VertData mainTransform(VertData v_in)
 	float noise;
 	if (randomize_movement)
 	{
-		t = (rand_f * 2) -1.0f;
+		t = (rand_f * 2) - 1.0f;
 		s = (rand_f * 2) - 1.0f;
 		noise = clamp( rand_f * random_scale,-0.99, 0.99);
 	}
