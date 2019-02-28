@@ -102,6 +102,7 @@ struct shader_filter_data
 
 	int total_width;
 	int total_height;
+	//bool use_sliders;
 
 	struct vec2 uv_offset;
 	struct vec2 uv_scale;
@@ -174,6 +175,7 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	size_t effect_buffer_total_size = effect_header_length + effect_body_length + effect_footer_length;
 
 	bool use_template = !obs_data_get_bool(settings, "override_entire_effect");
+	//bool use_sliders = obs_data_get_bool(settings, "use_sliders");
 
 	struct dstr effect_text = { 0 };
 
@@ -263,7 +265,7 @@ static void *shader_filter_create(obs_data_t *settings, obs_source_t *source)
 	dstr_init(&filter->last_path);
 	dstr_copy(&filter->last_path, obs_data_get_string(settings, "shader_file_name"));
 	filter->last_from_file = obs_data_get_bool(settings, "from_file");
-
+	//filter->use_sliders = obs_data_get_bool(settings, "use_sliders");
 	da_init(filter->stored_param_list);
 
 	obs_source_update(source, settings);
@@ -314,6 +316,20 @@ static bool shader_filter_file_name_changed(obs_properties_t *props,
 
 	return false;
 }
+
+//static bool use_sliders_changed(obs_properties_t *props,
+//	obs_property_t *p, obs_data_t *settings) {
+//	struct shader_filter_data *filter = obs_properties_get_param(props);
+//
+//	bool use_sliders = obs_data_get_bool(settings, "use_sliders");
+//	if (use_sliders != filter->use_sliders)
+//	{
+//		filter->reload_effect = true;
+//	}
+//	filter->use_sliders = use_sliders;
+//
+//	return false;
+//}
 
 static bool shader_filter_reload_effect_clicked(obs_properties_t *props, obs_property_t *property, void *data)
 {
@@ -366,6 +382,10 @@ static obs_properties_t *shader_filter_properties(void *data)
 		NULL, examples_path.array);
 	obs_property_set_modified_callback(file_name, shader_filter_file_name_changed);
 
+	//obs_property_t *use_sliders = obs_properties_add_bool(props, "use_sliders",
+	//	obs_module_text("ShaderFilter.UseSliders"));
+	//obs_property_set_modified_callback(use_sliders, use_sliders_changed);
+
 	obs_properties_add_button(props, "reload_effect", obs_module_text("ShaderFilter.ReloadEffect"),
 		shader_filter_reload_effect_clicked);
 
@@ -381,16 +401,22 @@ static obs_properties_t *shader_filter_properties(void *data)
 			obs_properties_add_bool(props, param_name, param_name);
 			break;
 		case GS_SHADER_PARAM_FLOAT:
-			obs_properties_add_float(props, param_name, param_name, -FLT_MAX, FLT_MAX, 1);
+			obs_properties_add_float(props, param_name, param_name, -FLT_MAX, FLT_MAX, 0.01);
 			break;
 		case GS_SHADER_PARAM_INT:
 			obs_properties_add_int(props, param_name, param_name, INT_MIN, INT_MAX, 1);
+			break;
+		case GS_SHADER_PARAM_INT3:
+
 			break;
 		case GS_SHADER_PARAM_VEC4:
 			obs_properties_add_color(props, param_name, param_name);
 			break;
 		case GS_SHADER_PARAM_TEXTURE:
 			obs_properties_add_path(props, param_name, param_name, OBS_PATH_FILE, shader_filter_texture_file_filter, NULL);
+			break;
+		case GS_SHADER_PARAM_STRING:
+			obs_properties_add_text(props, param_name, param_name, OBS_TEXT_MULTILINE);
 			break;
 		}
 	}
@@ -410,6 +436,7 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 	filter->expand_right = (int)obs_data_get_int(settings, "expand_right");
 	filter->expand_top = (int)obs_data_get_int(settings, "expand_top");
 	filter->expand_bottom = (int)obs_data_get_int(settings, "expand_bottom");
+	//filter->use_sliders = (bool)obs_data_get_bool(settings, "use_sliders");
 
 	if (filter->reload_effect)
 	{
@@ -437,8 +464,8 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 			break;
 		case GS_SHADER_PARAM_VEC4: // Assumed to be a color.
 
-			// Hack to ensure we have a default...
-			obs_data_set_default_int(settings, param_name, 0xff000000);
+			// Hack to ensure we have a default...(white)
+			obs_data_set_default_int(settings, param_name, 0xffffffff);
 
 			param->value.i = obs_data_get_int(settings, param_name);
 			break;
@@ -459,6 +486,9 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 			obs_enter_graphics();
 			gs_image_file_init_texture(param->image);
 			obs_leave_graphics();
+			break;
+		case GS_SHADER_PARAM_STRING:
+			obs_data_set_default_string(settings, param_name, "");
 			break;
 		}
 	}
@@ -509,7 +539,8 @@ static void shader_filter_tick(void *data, float seconds)
 
 	filter->elapsed_time += seconds;
 
-	filter->rand_f = (float)((double)rand_interval(0, 10000) / (double)10000); //rand_float(1); 
+	// undecided between this and "rand_float(1);" 
+	filter->rand_f = (float)((double)rand_interval(0, 10000) / (double)10000);
 }
 
 
@@ -572,6 +603,9 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 			case GS_SHADER_PARAM_TEXTURE:
 				gs_effect_set_texture(param->param, (param->image ? param->image->texture : NULL));
 				break;
+			case GS_SHADER_PARAM_STRING:
+				gs_effect_set_val(param->param, (char)param->value.i, sizeof(char));
+				break;
 			}
 		}
 
@@ -580,7 +614,6 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 	}
 
 }
-
 static uint32_t shader_filter_getwidth(void *data)
 {
 	struct shader_filter_data *filter = data;
