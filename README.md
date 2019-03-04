@@ -118,9 +118,11 @@ loaded.
 * *repeat.effect* (Overrides entire effect)&mdash;duplicates the input video as many times as you like and organizes on the screen.
 * *rounded_rect.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded 
   edges.
-* *scan_line.effect* (Overrides entire effect)&mdash;An effect that creates old style tv scan lines, for glitch style effects. 
+* *scan_line.shader* &mdash;An effect that creates old style tv scan lines, for glitch style effects. 
 * *shake.effect* (Overrides entire effect)&mdash;creates random screen glitch style shake. Keep the random_scale low for small (0.2-1) for small
   jerky movements and larger for less often big jumps.
+* *shine.shader* &mdash;Add shine / glow to any element, uses the transition luma wipes (obs-studio\plugins\obs-transitions\data\luma_wipes) or create your own, 
+   also includes a glitch (using rand_f), hide/reveal, reverse and ease
 ## Building
 
 If you wish to build the obs-shaderfilter plugin from source, you should just need [CMake](https://cmake.org/) 
