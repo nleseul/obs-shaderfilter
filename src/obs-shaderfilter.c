@@ -77,6 +77,7 @@ struct effect_param_data
 	{
 		long long i;
 		double f;
+		char string;
 	} value;
 };
 
@@ -407,7 +408,7 @@ static obs_properties_t *shader_filter_properties(void *data)
 			obs_properties_add_int(props, param_name, param_name, INT_MIN, INT_MAX, 1);
 			break;
 		case GS_SHADER_PARAM_INT3:
-
+			
 			break;
 		case GS_SHADER_PARAM_VEC4:
 			obs_properties_add_color(props, param_name, param_name);
@@ -488,7 +489,8 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 			obs_leave_graphics();
 			break;
 		case GS_SHADER_PARAM_STRING:
-			obs_data_set_default_string(settings, param_name, "");
+			obs_data_set_default_string(settings, param_name,"");
+			param->value.string = obs_data_get_string(settings, param_name);
 			break;
 		}
 	}
@@ -540,7 +542,7 @@ static void shader_filter_tick(void *data, float seconds)
 	filter->elapsed_time += seconds;
 
 	// undecided between this and "rand_float(1);" 
-	filter->rand_f = (float)((double)rand_interval(0, 10000) / (double)10000);
+	filter->rand_f = (float)((double)rand_interval(0, 10000) / (double)10000); 
 }
 
 
@@ -604,7 +606,9 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 				gs_effect_set_texture(param->param, (param->image ? param->image->texture : NULL));
 				break;
 			case GS_SHADER_PARAM_STRING:
-				gs_effect_set_val(param->param, (char)param->value.i, sizeof(char));
+				gs_effect_set_val(param->param,
+					(param->value.string ? (char)param->value.string : NULL),
+					gs_effect_get_val_size(param->param));
 				break;
 			}
 		}

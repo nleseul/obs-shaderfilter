@@ -9,6 +9,7 @@ uniform bool ease = false;
 uniform bool hide = false;
 uniform bool reverse = false;
 uniform bool glitch = false;
+uniform string notes = "'ease' makes the animation pause at the begin and end for a moment, 'hide' will make the image disappear, 'glitch' is random and amazing, 'reverse' quickly allows you to test settings";
 
 float EaseInOutCircTimer(float t,float b,float c,float d){
 	t /= d/2;
@@ -79,14 +80,14 @@ float4 mainImage(VertData v_in) : TARGET
 	// user color with luma
 	float4 output_color = float4(shine_color.rgb, luma);
 
-	float time = lerp(0.0f, 1.0f + 2*softness, b - 1.0);
+	float time = lerp(0.0f, 1.0f + abs(2*softness), b - 1.0);
 
 	// use luma texture to add alpha and shine
 
 	// if behind glow, consider trailing gradient shine then show underlying image
 	if (luma <= time - softness)
 	{
-		float alpha_behind = clamp(1.0 - (time - softness - luma ) / softness, 0.02, 1.0);		
+		float alpha_behind = clamp(1.0 - (time - softness - luma ) / softness, 0.00, 1.0);		
 		return lerp(rgba, rgba + output_color, alpha_behind);		
 	}
 
@@ -96,7 +97,7 @@ float4 mainImage(VertData v_in) : TARGET
 		// if hide, make the transition better
 		if (hide)
 		{
-			return float4(rgba.rgb, lerp(0.0, rgba.a, (time + softness) / (1 + softness)));
+			return float4(rgba.rgb, lerp(0.0, rgba.a, (time + softness) / (1 + abs(2*softness))));
 		}
 		else
 		{

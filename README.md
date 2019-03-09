@@ -54,11 +54,9 @@ standard template to add a basic vertex shader and other boilerplate. If you wis
 or other parts of the effect for some reason, you can check the "Override entire effect" option. 
 
 Any parameters you add to your shader (defined as `uniform` variables) will be detected by the plugin and exposed
-in the properties window to have their values set. Currently, only `int`, `float`, `bool`, `texture2d`, and `float4`
-parameters are supported. (`float4` parameters will be interpreted by the properties window as colors.) Note that the 
-current version of OBS has a [bug](https://obsproject.com/mantis/view.php?id=1028) that prevents filter properties
-from refreshing when filter data changes; if you update the parameters in your shader, you will need to close and
-reopen the filters window to see them. 
+in the properties window to have their values set. Currently, only `int`, `float`, `bool`, `string`, `texture2d`, and `float4`
+parameters are supported. (`float4` parameters will be interpreted by the properties window as colors.) `string` is used for 
+notes and instructions, but could be used in an effect or shader.
 
 Note that if your shader has syntax errors and fails to compile, OBS does not provide any error messages; you will
 simply see your source render nothing at all. In many cases the output of the effect parser will be written to the
@@ -121,7 +119,7 @@ loaded.
 * *scan_line.shader* &mdash;An effect that creates old style tv scan lines, for glitch style effects. 
 * *shake.effect* (Overrides entire effect)&mdash;creates random screen glitch style shake. Keep the random_scale low for small (0.2-1) for small
   jerky movements and larger for less often big jumps.
-* *shine.shader* &mdash;Add shine / glow to any element, uses the transition luma wipes (obs-studio\plugins\obs-transitions\data\luma_wipes) or create your own, 
+* *shine.shader* &mdash;Add shine / glow to any element, uses the transition luma wipes (obs-studio\plugins\obs-transitions\data\luma_wipes *SOME NEW WIPES INCLUDED IN THIS RELEASE ZIP*) or create your own, 
    also includes a glitch (using rand_f), hide/reveal, reverse and ease
 ## Building
 
