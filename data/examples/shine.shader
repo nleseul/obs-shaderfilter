@@ -66,7 +66,7 @@ float4 mainImage(VertData v_in) : TARGET
 	float c = 2.0; //change value
 	float d = 2.0; //duration
 
-	if (glitch) t = t + rand_f;
+	if (glitch) t = clamp(t + ((rand_f *2) - 1), 0.0,2.0);
 
 	b = Styler(t, 0, c, d, ease);
 

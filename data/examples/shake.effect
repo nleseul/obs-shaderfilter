@@ -1,23 +1,26 @@
+// Shake Effect By Charles Fettinger (https://github.com/Oncorporation)  2/2019
 // Added some randomization based upon random_scale input  
-// keep the random_scale low for small (0.2-1) for small jerky movements and larger for less often big jumps
 // updated for latest version of obs-shaderfilter
-// by Charles Fettinger (https://github.com/Oncorporation)
 
 uniform float4x4 ViewProj;
 uniform texture2d image;
 
-uniform float2 elapsed_time;
+uniform float elapsed_time;
 uniform float2 uv_offset;
 uniform float2 uv_scale;
 uniform float2 uv_pixel_interval;
 uniform float rand_f;
+uniform float2 uv_size;
 
-uniform float random_scale;
-uniform bool worble;
-uniform float speed;
-uniform float min_growth_pixels;
-uniform float max_growth_pixels;
-uniform bool randomize_movement;
+
+uniform float random_scale = 0.25;
+uniform bool worble = false;
+uniform float speed = 1.0;
+uniform float min_growth_pixels = 1.0;
+uniform float max_growth_pixels = 10.0;
+uniform bool randomize_movement = false;
+
+uniform string notes ='keep the random_scale low for small (0.2-1) for small jerky movements and larger for less often big jumps';
 
 sampler_state textureSampler {
 	Filter    = Linear;
@@ -78,14 +81,17 @@ VertData mainTransform(VertData v_in)
 	offset.x = uv_offset.x * (1 - t + noise);
 	offset.y = uv_offset.y * (1 - s + noise);
 
+	//float2 scale = uv_scale;
 	if (worble)
 	{
 		vert_out.pos = mul(float4(current_pos, 1  ), ViewProj);
+		//scale += dot(pos - current_pos, 1);
 	}
 	else
 	{
 		vert_out.pos = mul(float4(pos, 1  ), ViewProj);
 	}
+
 	vert_out.uv = v_in.uv * uv_scale  + offset;
 	return vert_out;
 }

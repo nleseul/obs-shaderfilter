@@ -1,5 +1,3 @@
-// Luminance Filter 2 by Charles Fettinger (https://github.com/Oncorporation)
-// added intended options from code that was added to OBS Studio
 uniform float4 color;
 uniform float lumaMax;
 uniform float lumaMin;
@@ -7,6 +5,7 @@ uniform float lumaMaxSmooth;
 uniform float lumaMinSmooth;
 uniform bool invertImageColor;
 uniform bool invertAlphaChannel;
+uniform string notes = "'luma max' - anything above will be transparent. 'luma min' - anything below will be transparent. 'luma(min or max)Smooth - make the transparency fade in or out by a distance. 'invert color' - inverts the color of the screen. 'invert alpha channel' - flips all settings on thier head, which is excellent for testing.";
 
 float4 InvertColor(float4 rgba_in)
 {	

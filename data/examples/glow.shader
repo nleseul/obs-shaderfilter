@@ -4,6 +4,8 @@ uniform int min_brightness= 27;
 uniform int max_brightness = 100;
 uniform int pulse_speed = 0;
 uniform bool ease;
+uniform string notes = "'ease' - makes the animation pause at the begin and end for a moment,'glow_percent' - how much brightness to add (recommend 0-100). 'blur' - how far should the glow extend (recommend 1-4).'pulse_speed' - (0-100). 'min/max brightness' - floor and ceiling brightness level to target for glows.";
+
 
 float EaseInOutCircTimer(float t,float b,float c,float d){
 	t /= d/2;

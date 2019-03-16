@@ -1,5 +1,7 @@
 // Drunk shader by Charles Fettinger  (https://github.com/Oncorporation)  2/2019
 uniform float4x4 color_matrix;
+
+
 uniform int glow_percent = 10;
 uniform int blur = 1;
 uniform int min_brightness= 27;
@@ -8,6 +10,8 @@ uniform int pulse_speed = 0;
 
 uniform float4 glow_color;
 uniform bool ease;
+uniform bool glitch;
+uniform string notes ="'drunk refers to the bad blur effect of using 4 coordinates to blur. 'blur' - the distance between the 4 copies (recommend 1-4)";
 
 
 // Gaussian Blur
@@ -65,6 +69,7 @@ float4 mainImage(VertData v_in) : TARGET
 
 	float4 color = image.Sample(textureSampler, v_in.uv);
 	float4 temp_color = color;
+	bool glitch_on = glitch;
 
 	//circular easing variable
 	float t = 1 + sin(elapsed_time * speed);
@@ -73,14 +78,26 @@ float4 mainImage(VertData v_in) : TARGET
 	float d = 2.0; //duration
 
 	//if(color.a <= 0.0) color.rgb = float3(0.0,0.0,0.0);
+	float4 glitch_color = glow_color;
 
 	for (int n = 0; n < 4; n++){			
 		//blur sample
 		b = BlurStyler(t,0,c,d,ease);
-		float4 ncolor = image.Sample(textureSampler, v_in.uv + (blur_amount * b) * offsets[n]) ;	
+		float4 ncolor = image.Sample(textureSampler, v_in.uv + (blur_amount * b) * offsets[n]) ;
+
+		//test for rand_f color
+		if (glitch) {			
+			glitch_color = float4(glow_color.rgb * rand_f,glow_color.a);
+			if ((color.r == rand_f) || (color.g == rand_f) || (color.b == rand_f))
+			{
+				glitch_on = true;
+			}			
+		}	
+
 		float intensity = dot(ncolor * 1 ,float3(0.299,0.587,0.114));
 		if (((intensity >= luminance_floor) && (intensity <= luminance_ceiling)) || // test luminance
-			((color.r == glow_color.r) && (color.g == glow_color.g) && (color.b == glow_color.b))) //test for chosen color
+			((color.r == glow_color.r) && (color.g == glow_color.g) && (color.b == glow_color.b)) || //test for chosen color
+			glitch_on) //test for rand color
 		{
 			//glow calc
 			ncolor.a = clamp(ncolor.a * glow_amount, 0.0, 1.0);
@@ -91,7 +108,7 @@ float4 mainImage(VertData v_in) : TARGET
 			// max is used to simulate addition of vector texture color
 			temp_color = float4(max(temp_color.rgb,ncolor.rgb * (glow_amount * (b/2))),  // color effected by glow over time
 						max(temp_color.a, (glow_amount * (b/2))))  // alpha effected by glow over time
-						* (glow_color * (b/2)); // glow color effected by glow over time
+						* (glitch_color * (b/2)); // glow color effected by glow over time
 		}
 	}
 	// grab lighter color

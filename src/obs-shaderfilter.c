@@ -95,6 +95,7 @@ struct shader_filter_data
 	gs_eparam_t *param_uv_pixel_interval;
 	gs_eparam_t *param_elapsed_time;
 	gs_eparam_t *param_rand_f;
+	gs_eparam_t *param_uv_size;	
 
 	int expand_left;
 	int expand_right;
@@ -108,6 +109,7 @@ struct shader_filter_data
 	struct vec2 uv_offset;
 	struct vec2 uv_scale;
 	struct vec2 uv_pixel_interval;
+	struct vec2 uv_size;
 	float elapsed_time;
 	float rand_f;
 
@@ -143,6 +145,7 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	filter->param_uv_pixel_interval = NULL;
 	filter->param_uv_scale = NULL;
 	filter->param_rand_f = NULL;
+	filter->param_uv_size = NULL;
 
 	if (filter->effect != NULL)
 	{
@@ -529,6 +532,9 @@ static void shader_filter_tick(void *data, float seconds)
 	filter->total_height = filter->expand_top
 		+ base_height
 		+ filter->expand_bottom;
+	
+	filter->uv_size.x = (float)filter->total_width;
+	filter->uv_size.y = (float)filter->total_height;
 
 	filter->uv_scale.x = (float)filter->total_width / base_width;
 	filter->uv_scale.y = (float)filter->total_height / base_height;
@@ -579,6 +585,10 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 		if (filter->param_rand_f != NULL)
 		{
 			gs_effect_set_float(filter->param_rand_f, filter->rand_f);
+		}
+		if (filter->param_uv_size != NULL)
+		{
+			gs_effect_set_vec2(filter->param_uv_size, &filter->uv_size);
 		}
 
 		size_t param_count = filter->stored_param_list.num;

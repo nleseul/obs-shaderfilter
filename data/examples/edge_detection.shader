@@ -10,6 +10,10 @@ uniform bool non_edge_multiply;
 uniform bool alpha_channel;
 uniform float alpha_level;
 uniform bool alpha_invert;
+uniform float rand_f;
+
+uniform string notes = "'sensativity' - 0.01 is max and will create the most edges. Increasing this value decreases the number of edges detected.  'edge non edge color' - the color to recolor vs the original image. 'edge or non edge multiply' - multiplies the color against the original color giving it a tint instead of replacing the color. White represents no tint. 'invert edge' - flips the sensativity and is great for testing and fine tuning. 'alpha channel' - use an alpha channel to replace original color with transparency. 'alpha_level' - transparency amount modifier where 1.0 = base luminance  (recommend 0.00 - 2.00). 'alpha_invert' - flip what is transparent from darks (default) to lights";
+
 float4 mainImage(VertData v_in) : TARGET
 {
 	float4 color = image.Sample(textureSampler, v_in.uv);

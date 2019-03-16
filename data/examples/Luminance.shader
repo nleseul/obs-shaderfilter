@@ -3,6 +3,8 @@ uniform float level;
 uniform bool invertImageColor;
 uniform bool invertAlphaChannel;
 
+uniform string notes = "'color' - the color to add to the original image. Multiplies the color against the original color giving it a tint. White represents no tint. 'invertImageColor' - - inverts the color of the screen, great for testing and fine tuning. 'level' - transparency amount modifier where 1.0 = base luminance  (recommend 0.00 - 10.00). 'invertAlphaChannel' - flip what is transparent from darks (default) to lights";
+
 float4 InvertColor(float4 rgba_in)
 {	
 	rgba_in.r = 1.0 - rgba_in.r;

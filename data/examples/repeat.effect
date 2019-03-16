@@ -6,10 +6,12 @@ uniform float3 color_range_min = {0.0, 0.0, 0.0};
 uniform float3 color_range_max = {1.0, 1.0, 1.0};
 uniform texture2d image;
 
-uniform float2 elapsed_time;
+uniform float elapsed_time;
 uniform float2 uv_offset;
 uniform float2 uv_scale;
 uniform float2 uv_pixel_interval;
+uniform float rand_f;
+uniform float2 uv_size;
 
 uniform float alpha = 1.0;
 uniform float copies = 4.0;

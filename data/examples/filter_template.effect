@@ -1,11 +1,12 @@
 uniform float4x4 ViewProj;
 uniform texture2d image;
 
-uniform float2 elapsed_time;
+uniform float elapsed_time;
 uniform float2 uv_offset;
 uniform float2 uv_scale;
 uniform float2 uv_pixel_interval;
 uniform float rand_f;
+uniform float2 uv_size;
 
 sampler_state textureSampler {
 	Filter    = Linear;
