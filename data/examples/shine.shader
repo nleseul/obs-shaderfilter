@@ -11,6 +11,9 @@ uniform bool reverse = false;
 uniform bool glitch = false;
 uniform string notes = "'ease' makes the animation pause at the begin and end for a moment, 'hide' will make the image disappear, 'glitch' is random and amazing, 'reverse' quickly allows you to test settings";
 
+uniform float start_adjust;
+uniform float stop_adjust;
+
 float EaseInOutCircTimer(float t,float b,float c,float d){
 	t /= d/2;
 	if (t < 1) return -c/2 * (sqrt(1 - t*t) - 1) + b;
@@ -72,40 +75,50 @@ float4 mainImage(VertData v_in) : TARGET
 
 	// combine luma texture and user defined shine color
 	float luma = l_tex.Sample(textureSampler, v_in.uv).x;
-	if (reverse)
+
+	// - adjust for min and max
+	if ((luma >= (start_adjust)) && (luma <= (1 - stop_adjust)))
 	{
-		luma = 1.0 - luma;
-	}
 
-	// user color with luma
-	float4 output_color = float4(shine_color.rgb, luma);
-
-	float time = lerp(0.0f, 1.0f + abs(2*softness), b - 1.0);
-
-	// use luma texture to add alpha and shine
-
-	// if behind glow, consider trailing gradient shine then show underlying image
-	if (luma <= time - softness)
-	{
-		float alpha_behind = clamp(1.0 - (time - softness - luma ) / softness, 0.00, 1.0);		
-		return lerp(rgba, rgba + output_color, alpha_behind);		
-	}
-
-	// if in front of glow, consider if the underlying image is hidden
-	if (luma >= time)
-	{
-		// if hide, make the transition better
-		if (hide)
+		if (reverse)
 		{
-			return float4(rgba.rgb, lerp(0.0, rgba.a, (time + softness) / (1 + abs(2*softness))));
+			luma = 1.0 - luma;
 		}
-		else
-		{
-			return rgba;
-		}
-	}
+	
+		// user color with luma
+		float4 output_color = float4(shine_color.rgb, luma);
 
-	// else show the glow area, with luminance
-	float alpha = (time - luma) / softness;
-	return lerp(rgba, rgba + output_color, alpha);
+		float time = lerp(0.0f, 1.0f + abs(2*softness), b - 1.0);
+
+		// use luma texture to add alpha and shine
+
+		// if behind glow, consider trailing gradient shine then show underlying image
+		if (luma <= time - softness)
+		{
+			float alpha_behind = clamp(1.0 - (time - softness - luma ) / softness, 0.00, 1.0);		
+			return lerp(rgba, rgba + output_color, alpha_behind);		
+		}
+
+		// if in front of glow, consider if the underlying image is hidden
+		if (luma >= time)
+		{
+			// if hide, make the transition better
+			if (hide)
+			{
+				return float4(rgba.rgb, lerp(0.0, rgba.a, (time + softness) / (1 + abs(2*softness))));
+			}
+			else
+			{
+				return rgba;
+			}
+		}
+
+		// else show the glow area, with luminance
+		float alpha = (time - luma) / softness;
+		return lerp(rgba, rgba + output_color, alpha);
+	}
+	else
+	{
+		return rgba;
+	}
 }
