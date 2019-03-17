@@ -78,6 +78,7 @@ handle these variables being missing, but the shader may malfunction.)
   used in the standard vertex shader to draw extra pixels on the borders of the source.
 * **`uv_scale`** (`float2`)&mdash;The scale which should be applied to the UV coordinates of the vertices. This is 
   used in the standard vertex shader to draw extra pixels on the borders of the source.
+* **`uv_size`** (`float2`)&mdash;The height and width of the screen.
 * **`uv_pixel_interval`** (`float2`)&mdash;This is the size in UV coordinates of an individual texel. You can use
   this to convert the UV coordinates of the pixel being processed to the coordinates of that texel in the source
   texture, or otherwise scale UV coordinate distances into texel distances.
@@ -119,8 +120,9 @@ loaded.
 * *scan_line.shader* &mdash;An effect that creates old style tv scan lines, for glitch style effects. 
 * *shake.effect* (Overrides entire effect)&mdash;creates random screen glitch style shake. Keep the random_scale low for small (0.2-1) for small
   jerky movements and larger for less often big jumps.
-* *shine.shader* &mdash;Add shine / glow to any element, uses the transition luma wipes (obs-studio\plugins\obs-transitions\data\luma_wipes *SOME NEW WIPES INCLUDED IN THIS RELEASE ZIP*) or create your own, 
-   also includes a glitch (using rand_f), hide/reveal, reverse and ease
+* *shine.shader* &mdash;Add shine / glow to any element, use the transition luma wipes (obs-studio\plugins\obs-transitions\data\luma_wipes *SOME NEW WIPES INCLUDED IN THIS RELEASE ZIP*) or create your own, 
+   also includes a glitch (using rand_f), hide/reveal, reverse and ease, start adjustment and stop adjustment
+   video explanation of usage [Twitch.tv/videos/396724980](https://www.twitch.tv/videos/396724980)
 ## Building
 
 If you wish to build the obs-shaderfilter plugin from source, you should just need [CMake](https://cmake.org/) 
