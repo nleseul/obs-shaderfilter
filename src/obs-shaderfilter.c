@@ -23,6 +23,7 @@ uniform float2 uv_offset;\
 uniform float2 uv_scale;\
 uniform float2 uv_pixel_interval;\
 uniform float rand_f;\
+uniform float2 uv_size;\
 \
 sampler_state textureSampler{\
 	Filter = Linear;\
