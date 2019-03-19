@@ -101,6 +101,7 @@ loaded.
   renders the input directly to the output after scaling UVs to reflect any extra border pixels. This is useful as a starting
   point for developing new effects, especially those that might need a custom vertex shader. (Note that modifying this file will
   not affect the internal effect template used by the plugin.)
+* *glitch_analog.shader*&mdash;A shader that creates glitch effects similar to analog signal issues. Includes support for alpha channel.   
 * *luminance.shader*&mdash;A shader that adds an alpha layer based on brightness instead of color. Extremely useful for making live 
   video special effects, like replacing backgrounds or foregrounds.
 * *multiply.shader*&mdash;A shader that multiplies the input by another image specified in the parameters. Demonstrates the use 
