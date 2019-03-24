@@ -23,14 +23,14 @@ float4 mainImage(VertData v_in) : TARGET
 {
 	//3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481 							3.141592653589793238462643383279502884197169399375105820974944592307816406286 
 	//static const float pix2 = 6.2831853071795864769252;//86766559005768394338798750211641949
-	static const float nfloor = clamp(floor,0.0,100.0) / 100.0;
+	static const float nfloor = clamp(floor,0.0,100.0) * 0.01.0;
 	static const float nperiod = max(period,1.0);
 	static const float gap = 1 - nfloor;
 	static const float pi   = 3.1415926535897932384626;
 	static float2 direction = float2( cos(angle * pi / 180.0) , sin(angle * pi / 180.0) );
 	static float nspeed = 0.0;
 	if(animate){
-		nspeed = speed / 1000000;
+		nspeed = speed * 0.0001;
 	}
 	
 	float4 color = image.Sample(textureSampler, v_in.uv);

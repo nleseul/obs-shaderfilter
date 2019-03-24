@@ -60,8 +60,8 @@ float4 mainImage(VertData v_in) : TARGET
 {
 	// convert input for vector math
 	float4 rgba = convert_pmalpha(image.Sample(textureSampler, v_in.uv));
-	float speed = (float)speed_percent / 100;	
-	float softness = max(abs((float)gradient_percent / 100), 0.01f) * sign(gradient_percent);
+	float speed = (float)speed_percent * 0.01;	
+	float softness = max(abs((float)gradient_percent * 0.01), 0.01f) * sign(gradient_percent);
 
 	// circular easing variable
 	float t = 1.0 + sin(elapsed_time * speed);

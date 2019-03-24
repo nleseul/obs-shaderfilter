@@ -13,8 +13,6 @@ uniform float elapsed_time;
 uniform float2 uv_offset;
 uniform float2 uv_scale;
 uniform float2 uv_pixel_interval;
-uniform float rand_f;
-uniform float2 uv_size;
 
 // Settings (Private)
 //uniform float registerkernel[25];
@@ -29,6 +27,7 @@ sampler_state pointClampSampler {
 	MinLOD    = 0;
 	MaxLOD    = 0;
 };
+
 sampler_state bilinearClampSampler {
 	Filter    = Bilinear;
 	AddressU  = Clamp;
@@ -37,33 +36,29 @@ sampler_state bilinearClampSampler {
 	MaxLOD    = 0;
 };
 
-struct VertDataIn {
+struct VertData {
 	float4 pos : POSITION;
 	float2 uv  : TEXCOORD0;
 };
 
-struct VertDataOut {
-	float4 pos : POSITION;
-	float2 uv  : TEXCOORD0;
-};
-
-VertDataOut VSDefault(VertDataIn vert_in)
+float Gaussian(float x, float o)
 {
-	VertDataOut vert_out;
+	float pivalue = 3.1415926535897932384626433832795;
+	return (1.0 / (o * sqrt(2.0 * pivalue))) * exp((-(x * x)) / (2 * (o * o)));
+};
+
+VertData VSDefault(VertData vert_in)
+{
+	VertData vert_out;
 	vert_out.pos = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
 	vert_out.uv  = vert_in.uv;
 	return vert_out;
 }
 
-// Gaussian Blur
-float Gaussian(float x, float o) {
-	const float pivalue = 3.1415926535897932384626433832795;
-	return (1.0 / (o * sqrt(2.0 * pivalue))) * exp((-(x * x)) / (2 * (o * o)));
-}
-
 float4 InternalGaussian(float2 p_uv, float2 p_uvStep, int p_radius,
-  texture2d p_image, float2 p_imageTexel) {    
-	float l_gauss = Gaussian(0, 1.0);
+  texture2d p_image, float2 p_imageTexel)
+  {    
+	float l_gauss = Gaussian(0.0, 1.0);
 	float4 l_value = p_image.Sample(pointClampSampler, p_uv) * l_gauss;
 	float2 l_uvoffset = float2(0, 0);
 	for (int k = 1; k <= p_radius; k++) {
@@ -80,7 +75,8 @@ float4 InternalGaussian(float2 p_uv, float2 p_uvStep, int p_radius,
 
 float4 InternalGaussianPrecalculated(float2 p_uv, float2 p_uvStep, int p_radius,
   texture2d p_image, float2 p_imageTexel,
-  texture2d p_kernel, float2 p_kernelTexel) {
+  texture2d p_kernel, float2 p_kernelTexel)
+  {
 	float4 l_value = p_image.Sample(pointClampSampler, p_uv)
 		* kernel.Sample(pointClampSampler, float2(0, 0)).r;
 	float2 l_uvoffset = float2(0, 0);
@@ -96,7 +92,8 @@ float4 InternalGaussianPrecalculated(float2 p_uv, float2 p_uvStep, int p_radius,
 
 /*float4 InternalGaussianPrecalculatedNVOptimized(float2 p_uv, int pixel_size,
   texture2d p_image, float2 p_imageTexel,
-  texture2d p_kernel, float2 p_kernelTexel) {
+  texture2d p_kernel, float2 p_kernelTexel)
+  {
 	if (pixel_size % 2 == 0) {
 		float4 l_value = p_image.Sample(pointClampSampler, p_uv)
 			* kernel.Sample(pointClampSampler, float2(0, 0)).r;
@@ -116,7 +113,8 @@ float4 InternalGaussianPrecalculated(float2 p_uv, float2 p_uvStep, int p_radius,
 	}
 }*/
 
-float4 PSGaussian(VertDataOut vert_in) : TARGET {
+float4 PSGaussian(VertData vert_in) : TARGET 
+{
 	
 	float4 color = image.Sample(pointClampSampler, vert_in.uv);
 

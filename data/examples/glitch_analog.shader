@@ -22,8 +22,8 @@ float nrand(float x, float y)
 
 float4 mainImage(VertData v_in) : TARGET
 {
-	float speed = (float)pulse_speed_percent / 100;	
-	float alpha = (float)alpha_percent / 100;
+	float speed = (float)pulse_speed_percent * 0.01;	
+	float alpha = (float)alpha_percent * 0.01;
 	float scan_line_jitter_threshold = (float)scan_line_jitter_threshold_percent /100;
 	float u = v_in.uv.x;
 	float v = v_in.uv.y;
