@@ -124,6 +124,12 @@ loaded.
 * *shine.shader* &mdash;Add shine / glow to any element, use the transition luma wipes (obs-studio\plugins\obs-transitions\data\luma_wipes *SOME NEW WIPES INCLUDED IN THIS RELEASE ZIP*) or create your own, 
    also includes a glitch (using rand_f), hide/reveal, reverse and ease, start adjustment and stop adjustment
    video explanation of usage [Twitch.tv/videos/396724980](https://www.twitch.tv/videos/396724980)
+* *vignetting.shader* &mdash;A shader that reduces opacity further from the center of the image. inner radius is the start and outer radius is the end.
+    suggested default settings is opacity 0.5, innerRadius = 0.5, outerRadius = 1.2
+* *zoom_blur.shader* &mdash;A shader that creates a zoom with blur effect based on a number of samples and magnitude of each sample. It also includes
+   an animation with or without easing and a glitch option. Set speed to zero to not use animation. Suggested values are 15 samples and 30-50 magnitude.
+
+
 ## Building
 
 If you wish to build the obs-shaderfilter plugin from source, you should just need [CMake](https://cmake.org/) 
