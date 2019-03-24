@@ -23,8 +23,8 @@ float4 mainImage(VertData v_in) : TARGET
 {
 	//3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481 							3.141592653589793238462643383279502884197169399375105820974944592307816406286 
 	//static const float pix2 = 6.2831853071795864769252;//86766559005768394338798750211641949
-	static const float nfloor = clamp(floor,0.0,100.0) * 0.01.0;
-	static const float nperiod = max(period,1.0);
+	static const float nfloor = clamp(floor, 0.0, 100.0) * 0.01;
+	static const float nperiod = max(period, 1.0);
 	static const float gap = 1 - nfloor;
 	static const float pi   = 3.1415926535897932384626;
 	static float2 direction = float2( cos(angle * pi / 180.0) , sin(angle * pi / 180.0) );
@@ -43,9 +43,9 @@ float4 mainImage(VertData v_in) : TARGET
 		
 		float rh_sin = sin(((v_in.uv.y * direction.y + v_in.uv.x * direction.x) + t) * (h_interval / nperiod));
 		if(shift){
-			rh_sin = ((1.0 + rh_sin) / 2.0) * gap + nfloor;
+			rh_sin = ((1.0 + rh_sin) * 0.5) * gap + nfloor;
 			if(boost){
-				rh_sin += gap / 2.0;
+				rh_sin += gap * 0.5;
 			}
 		}
 		float4 s_mult = float4(rh_sin,rh_sin,rh_sin,1);
@@ -57,9 +57,9 @@ float4 mainImage(VertData v_in) : TARGET
 		
 		float rh_sin = sin(((v_in.uv.y * direction.y + v_in.uv.x * direction.x) + t) * (w_interval / nperiod));
 		if(shift){
-			rh_sin = ((1.0 + rh_sin) / 2.0) * gap + nfloor;
+			rh_sin = ((1.0 + rh_sin) * 0.5) * gap + nfloor;
 			if(boost){
-				rh_sin += gap / 2.0;
+				rh_sin += gap * 0.5;
 			}
 		}
 		float4 s_mult = float4(rh_sin,rh_sin,rh_sin,1);
