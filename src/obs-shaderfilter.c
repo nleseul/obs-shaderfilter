@@ -216,6 +216,8 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	for (size_t effect_index = 0; effect_index < effect_count; effect_index++)
 	{
 		gs_eparam_t *param = gs_effect_get_param_by_idx(filter->effect, effect_index);
+		gs_eparam_t *annot = gs_param_get_annotation_by_idx(param, effect_index);
+
 		struct gs_effect_param_info info;
 		gs_effect_get_param_info(param, &info);
 
@@ -239,6 +241,10 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 		{
 			filter->param_rand_f = param;
 		}
+		else if (strcmp(info.name, "uv_size") == 0)
+		{
+			filter->param_uv_size = param;
+		}
 		else if (strcmp(info.name, "ViewProj") == 0 || strcmp(info.name, "image") == 0)
 		{
 			// Nothing.
@@ -249,6 +255,32 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 			dstr_copy(&cached_data->name, info.name);
 			cached_data->type = info.type;
 			cached_data->param = param;
+
+			//switch (cached_data->type)
+			//{
+			//case GS_SHADER_PARAM_BOOL:
+			//	cached_data->value.i = gs_effect_get_default_val(param);
+			//	break;
+			//case GS_SHADER_PARAM_FLOAT:
+			//	//cached_data->value.f = gs_effect_get_default_val(param);
+			//	break;
+			//case GS_SHADER_PARAM_INT:
+			//	cached_data->value.i = gs_effect_get_default_val(param);
+			//	break;
+			//case GS_SHADER_PARAM_INT3:
+
+			//	break;
+			//case GS_SHADER_PARAM_VEC4:
+			//	cached_data->value.i = gs_effect_get_default_val(param);
+			//	break;
+			//case GS_SHADER_PARAM_TEXTURE:
+			//	
+			//	break;
+			//case GS_SHADER_PARAM_STRING:
+			//	cached_data->value.string = gs_effect_get_default_val(param);
+			//	break;
+			//}
+			
 		}
 	}
 }
@@ -399,34 +431,38 @@ static obs_properties_t *shader_filter_properties(void *data)
 	{
 		struct effect_param_data *param = (filter->stored_param_list.array + param_index);
 		const char *param_name = param->name.array;
+		struct dstr display_name = {0};
+		dstr_ncat(&display_name, param_name, param->name.len);
+		dstr_replace(&display_name, "_", " ");
 
 		switch (param->type)
 		{
 		case GS_SHADER_PARAM_BOOL:
-			obs_properties_add_bool(props, param_name, param_name);
+			obs_properties_add_bool(props, param_name, display_name.array);
 			break;
 		case GS_SHADER_PARAM_FLOAT:
-			obs_properties_add_float(props, param_name, param_name, -FLT_MAX, FLT_MAX, 0.01);
+			obs_properties_add_float(props, param_name, display_name.array, -FLT_MAX, FLT_MAX, 0.01);
 			break;
 		case GS_SHADER_PARAM_INT:
-			obs_properties_add_int(props, param_name, param_name, INT_MIN, INT_MAX, 1);
+			obs_properties_add_int(props, param_name, display_name.array, INT_MIN, INT_MAX, 1);
 			break;
 		case GS_SHADER_PARAM_INT3:
 			
 			break;
 		case GS_SHADER_PARAM_VEC4:
-			obs_properties_add_color(props, param_name, param_name);
+			obs_properties_add_color(props, param_name, display_name.array);
 			break;
 		case GS_SHADER_PARAM_TEXTURE:
-			obs_properties_add_path(props, param_name, param_name, OBS_PATH_FILE, shader_filter_texture_file_filter, NULL);
+			obs_properties_add_path(props, param_name, display_name.array, OBS_PATH_FILE, shader_filter_texture_file_filter, NULL);
 			break;
 		case GS_SHADER_PARAM_STRING:
-			obs_properties_add_text(props, param_name, param_name, OBS_TEXT_MULTILINE);
+			obs_properties_add_text(props, param_name, display_name.array, OBS_TEXT_MULTILINE);
 			break;
 		}
+		dstr_free(&display_name);
 	}
 
-	dstr_free(&examples_path);
+	dstr_free(&examples_path);	
 
 	return props;
 }
@@ -493,7 +529,9 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 			obs_leave_graphics();
 			break;
 		case GS_SHADER_PARAM_STRING:
-			obs_data_set_default_string(settings, param_name,"");
+			obs_data_set_default_string(settings, param_name, "");
+			//obs_data_set_default_string(settings, param_name, (const char)gs_effect_get_default_val(param));
+			
 			param->value.string = obs_data_get_string(settings, param_name);
 			break;
 		}
