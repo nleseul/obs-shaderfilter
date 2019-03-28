@@ -1,16 +1,17 @@
 
 // Selective Color shader by Charles Fettinger for obs-shaderfilter plugin 3/2019
 //https://github.com/Oncorporation/obs-shaderfilter
-uniform float cutoffR = 0.40;
-uniform float cutoffG = 0.025;
-uniform float cutoffB = 0.25;
-uniform float cutoffY = 0.25;
+
+uniform float cutoff_Red = 0.40;
+uniform float cutoff_Green = 0.025;
+uniform float cutoff_Blue = 0.25;
+uniform float cutoff_Yellow = 0.25;
 uniform float acceptanceAmplification = 5.0;
 
-uniform bool showR = true;
-uniform bool showG = true;
-uniform bool showB = true;
-uniform bool showY = true;
+uniform bool show_Red = true;
+uniform bool show_Green = true;
+uniform bool show_Blue = true;
+uniform bool show_Yellow = true;
 uniform string notes = "defaults: .4,.03,.25,.25, 5.0, true,true, true, true. cuttoff higher = less color, 0 = all 1 = none";
 
 float4 mainImage(VertData v_in) : TARGET
@@ -31,10 +32,10 @@ float4 mainImage(VertData v_in) : TARGET
  	float yellowness = 0.1 + rgLuminance * 1.2 - color.b - rgDiff;
 
 	float4 accept;
-	accept.r  = showR * (redness - cutoffR);
-	accept.g  = showG * (greenness - cutoffG);
-	accept.b  = showB * (blueness - cutoffB);
-	accept[3] = showY * (yellowness - cutoffY);
+	accept.r  = show_Red * (redness - cutoff_Red);
+	accept.g  = show_Green * (greenness - cutoff_Green);
+	accept.b  = show_Blue * (blueness - cutoff_Blue);
+	accept[3] = show_Yellow * (yellowness - cutoff_Yellow);
 
 	float acceptance = max (accept.r, max(accept.g, max(accept.b, max(accept[3],0))));
 	float modAcceptance = min (acceptance * acceptanceAmplification, 1);
