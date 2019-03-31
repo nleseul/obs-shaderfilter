@@ -10,11 +10,12 @@ uniform float elapsed_time;
 uniform float2 uv_offset;
 uniform float2 uv_scale;
 uniform float2 uv_pixel_interval;
-uniform float rand_f;
 uniform float2 uv_size;
+uniform float rand_f;
 
 uniform float alpha = 1.0;
 uniform float copies = 4.0;
+uniform string notes = 'copies, use a number that has a square root. Alpha adjusts the alpha level of the copies (recommend 0.5-2.0 recommend)';
 
 sampler_state def_sampler {
 	Filter   = Linear;
@@ -42,13 +43,6 @@ float4 PSDrawBare(VertInOut vert_in) : TARGET
 	return rgba;
 }
 
-float4 PSDrawMatrix(VertInOut vert_in) : TARGET
-{
-	float4 yuv = image.Sample(def_sampler, vert_in.uv);
-	yuv.xyz = clamp(yuv.xyz, color_range_min, color_range_max);
-	return saturate(mul(float4(yuv.xyz, 1.0), color_matrix));
-}
-
 technique Draw
 {
 	pass
@@ -58,11 +52,3 @@ technique Draw
 	}
 }
 
-technique DrawMatrix
-{
-	pass
-	{
-		vertex_shader = VSDefault(vert_in);
-		pixel_shader  = PSDrawMatrix(vert_in);
-	}
-}

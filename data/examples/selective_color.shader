@@ -1,4 +1,3 @@
-
 // Selective Color shader by Charles Fettinger for obs-shaderfilter plugin 3/2019
 //https://github.com/Oncorporation/obs-shaderfilter
 
@@ -6,7 +5,7 @@ uniform float cutoff_Red = 0.40;
 uniform float cutoff_Green = 0.025;
 uniform float cutoff_Blue = 0.25;
 uniform float cutoff_Yellow = 0.25;
-uniform float acceptanceAmplification = 5.0;
+uniform float acceptance_Amplifier = 5.0;
 
 uniform bool show_Red = true;
 uniform bool show_Green = true;
@@ -38,7 +37,7 @@ float4 mainImage(VertData v_in) : TARGET
 	accept[3] = show_Yellow * (yellowness - cutoff_Yellow);
 
 	float acceptance = max (accept.r, max(accept.g, max(accept.b, max(accept[3],0))));
-	float modAcceptance = min (acceptance * acceptanceAmplification, 1);
+	float modAcceptance = min (acceptance * acceptance_Amplifier, 1);
 
 	float4 result;
 	result = modAcceptance * color + (1.0-modAcceptance) * gray;

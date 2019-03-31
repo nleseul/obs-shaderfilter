@@ -92,6 +92,8 @@ loaded.
 
 * *blink.shader*&mdash;A shader that fades the opacity of the output in and out over time, with a configurable speed
   multiplier. Demonstrates the user of the `elapsed_time` parameter.
+* *bloom.shader / glow.shader*&mdash; simple shaders to add glow or bloom effects, the glow shader has some additional options for animation
+* *cartoon.effect* (Overrides entire effect)&mdash; Simple Cartooning based on hue and steps of detail value.
 * *border.shader*&mdash;A shader that adds a solid border to all extra pixels outside the bounds of the input. 
 * *drop_shadow.shader*&mdash;A shader that adds a basic drop shadow to the input. Note that this is done with a simple
   uniform blur, so it won't look quite as good as a proper Gaussian blur. This is also an O(N&sup2;) blur on the size 
@@ -101,6 +103,7 @@ loaded.
   renders the input directly to the output after scaling UVs to reflect any extra border pixels. This is useful as a starting
   point for developing new effects, especially those that might need a custom vertex shader. (Note that modifying this file will
   not affect the internal effect template used by the plugin.)
+* *gradient.shader*&mdash; This shader has a little brother *simple_gradient.shader*, but lets you choose three colors and animate gradients.
 * *glitch_analog.shader*&mdash;A shader that creates glitch effects similar to analog signal issues. Includes support for alpha channel.   
 * *luminance.shader*&mdash;A shader that adds an alpha layer based on brightness instead of color. Extremely useful for making live 
   video special effects, like replacing backgrounds or foregrounds.
@@ -111,14 +114,17 @@ loaded.
   a custom vertex shader that manipulates the position of the rendered vertices based on user data. Note that moving the vertices 
   in the vertex shader will not affect the logical size of the source in OBS, and this may mean that pixels outside the source's
   bounds will get cut off by later filters in the filter chain.
+* *rainbow.shader*&mdash;Creates Rainbow effects, animated, rotating, horizontal or vertical. This is an expensive process and limiters
+  are implemented. 
 * *rectangular_drop_shadow.shader*&mdash;A shader that renders an optimized drop shadow for sources that are opaque and rectangular. 
   Pixels inside the bounds of the input are treated as solid; pixels outside are treated as opaque. The complexity of the blur
   does not increase with its size, so you should be able to make your blur size as large as you like wtihout affecting
   GPU load. 
-* *repeat.effect* (Overrides entire effect)&mdash;duplicates the input video as many times as you like and organizes on the screen.
+* *repeat.effect* (Overrides entire effect)&mdash;Duplicates the input video as many times as you like and organizes on the screen.
 * *rounded_rect.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded 
   edges.
 * *scan_line.shader* &mdash;An effect that creates old style tv scan lines, for glitch style effects. 
+* *selective_color.shader*&mdash;Create black and white effects with some colorization. (defaults: .4,.03,.25,.25, 5.0, true,true, true, true. cuttoff higher = less color, 0 = all 1 = none)
 * *shake.effect* (Overrides entire effect)&mdash;creates random screen glitch style shake. Keep the random_scale low for small (0.2-1) for small
   jerky movements and larger for less often big jumps.
 * *shine.shader* &mdash;Add shine / glow to any element, use the transition luma wipes (obs-studio\plugins\obs-transitions\data\luma_wipes *SOME NEW WIPES INCLUDED IN THIS RELEASE ZIP*) or create your own, 
@@ -128,7 +134,8 @@ loaded.
     suggested default settings is opacity 0.5, innerRadius = 0.5, outerRadius = 1.2
 * *zoom_blur.shader* &mdash;A shader that creates a zoom with blur effect based on a number of samples and magnitude of each sample. It also includes
    an animation with or without easing and a glitch option. Set speed to zero to not use animation. Suggested values are 15 samples and 30-50 magnitude.
-
+* *other* &mdash; I have far too many shaders to list. Please check [Examples folder](https://github.com/Oncorporation/obs-shaderfilter/tree/master/data/examples)
+   or find me on discord, as I have many addtional filters for fixing input problems. 
 
 ## Building
 
@@ -153,3 +160,8 @@ described above.
 
 This project is licensed under the "[Unlicense](http://unlicense.org/)", because copy[right|left] is a hideous
 mess to deal with and I don't like it. 
+
+## Donations
+
+I appreciate donations on twitch.tv/surn , [Bitcoin](bitcoin:3HAN6eVxv81URgj51wxeCd9eMhg3tvriro) or [LiteCoin](litecoin:MQFVTFCZUtcucZJzQCyiSDTirrWGqTyCjM).
+Why Crypto? You do not have free speech when you live in fear of everything being taken away on an authoritarian whim, a criminal plot or by a outraged mob.

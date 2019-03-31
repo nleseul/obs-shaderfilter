@@ -1,8 +1,15 @@
+uniform float4x4 ViewProj;
+uniform texture2d image;
 
-// analog glitch shader by Charles Fettinger for obs-shaderfilter plugin 3/2019
-//https://github.com/Oncorporation/obs-shaderfilter
+uniform float elapsed_time;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
+uniform float2 uv_pixel_interval;
+uniform float rand_f;
+uniform float2 uv_size;
+
 uniform float scan_line_jitter_displacement; // (displacement, threshold)
-uniform int scan_line_jitter_threshold_percent;
+uniform int scan_line_jitter_threshold_percent = 50;
 uniform float vertical_jump_amount;
 uniform float vertical_speed;// (amount, speed)
 uniform float horizontal_shake;
@@ -13,6 +20,25 @@ uniform int alpha_percent = 100;
 uniform bool rotate_colors;
 uniform string notes;
 
+sampler_state textureSampler {
+	Filter    = Point;
+	AddressU  = Border;
+	AddressV  = Border;
+	BorderColor = 00000000;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+VertData mainTransform(VertData v_in)
+{
+	VertData vert_out;
+	vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+	vert_out.uv = v_in.uv * uv_scale + uv_offset;
+	return vert_out;
+}
 
 float nrand(float x, float y)
 {
@@ -22,7 +48,7 @@ float nrand(float x, float y)
 
 float4 mainImage(VertData v_in) : TARGET
 {
-	float speed = (float)pulse_speed_percent * 0.01;	
+	float speed = (float)pulse_speed_percent * 0.01;
 	float alpha = (float)alpha_percent * 0.01;
 	float scan_line_jitter_threshold = (float)scan_line_jitter_threshold_percent * 0.01;
 	float u = v_in.uv.x;
@@ -48,18 +74,20 @@ float4 mainImage(VertData v_in) : TARGET
 	
 	if(rotate_colors)
 	{
-		// get general time number between 0 and 4
-		float tx = (t + 1) * 2;
-		// 3 steps  c1->c2, c2->c3, c3->c1
-		//when between 0 - 1 only c1 rises then falls
-		//(min(tx, 2.0) * 0.5)  range between 0-2 converted to 0-1-0
-		src1.x = lerp(src1.x, rgba.x, clamp((min(tx, 2.0) * 0.5),0.0,0.5));
-		//((min(max(1.0, tx),3.0) - 1) * 0.5)   range between 1-3 converted to 0-1-0
-		src2.x = lerp(src2.x, rgba.y, clamp(((min(max(1.0, tx),3.0) - 1) * 0.5),0.0,0.5));
-		//((min(2.0, tx) -2) * 0.5)  range between 2 and 4  converted to 0-1-0
-		src1.y = lerp(src1.y, rgba.z, clamp(((min(2.0, tx) -2) * 0.5),0.0,0.5));
+		src1.x = lerp(src1.x, rgba.x, clamp(1 - sin(elapsed_time * speed),0.0,0.5));
+		src2.x = lerp(src2.x, rgba.y, clamp(sin(elapsed_time * speed),0.0,0.5));
+		src1.y = lerp(src1.y, rgba.z, clamp(1 - sin(elapsed_time * speed),0.0,0.5));
 		
 	}
-
+	
 	return float4(src1.x, src2.x, src1.y, alpha);
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = mainTransform(v_in);
+		pixel_shader  = mainImage(v_in);
+	}
 }
