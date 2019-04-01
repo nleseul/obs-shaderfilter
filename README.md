@@ -115,7 +115,7 @@ loaded.
   in the vertex shader will not affect the logical size of the source in OBS, and this may mean that pixels outside the source's
   bounds will get cut off by later filters in the filter chain.
 * *rainbow.shader*&mdash;Creates Rainbow effects, animated, rotating, horizontal or vertical. This is an expensive process and limiters
-  are implemented. 
+  are implemented.[https://www.twitch.tv/videos/404349212](https://www.twitch.tv/videos/404349212) 
 * *rectangular_drop_shadow.shader*&mdash;A shader that renders an optimized drop shadow for sources that are opaque and rectangular. 
   Pixels inside the bounds of the input are treated as solid; pixels outside are treated as opaque. The complexity of the blur
   does not increase with its size, so you should be able to make your blur size as large as you like wtihout affecting
