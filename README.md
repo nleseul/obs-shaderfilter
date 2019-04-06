@@ -1,4 +1,4 @@
-# obs-shaderfilter 1.1
+# obs-shaderfilter 1.0
 
 ## Introduction
 
@@ -144,7 +144,7 @@ I recommend *.shader* do not require `override_entire_effect` as pixel shaders, 
 * *zoom_blur.shader* &mdash;A shader that creates a zoom with blur effect based on a number of samples and magnitude of each sample. It also includes
    an animation with or without easing and a glitch option. Set speed to zero to not use animation. Suggested values are 15 samples and 30-50 magnitude.
 * *other* &mdash; I have far too many shaders to list. Please check [Examples folder](https://github.com/Oncorporation/obs-shaderfilter/tree/master/data/examples)
-   or find me on discord, as I have many addtional filters for fixing input problems. 
+   or find me on discord, as I have many additional filters for fixing input problems. 
 
 ## Building
 
