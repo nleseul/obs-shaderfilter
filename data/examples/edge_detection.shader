@@ -8,7 +8,7 @@ uniform bool edge_multiply;
 uniform float4 non_edge_color;
 uniform bool non_edge_multiply;
 uniform bool alpha_channel;
-uniform float alpha_level;
+uniform float alpha_level = 100;
 uniform bool alpha_invert;
 uniform float rand_f;
 

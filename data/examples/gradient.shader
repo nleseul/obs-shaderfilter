@@ -1,12 +1,12 @@
 // gradient shader by Charles Fettinger for obs-shaderfilter plugin 3/2019
 //https://github.com/Oncorporation/obs-shaderfilter
-uniform float4 start_color;
-uniform float start_step;
-uniform float4 middle_color;
-uniform float middle_step;
-uniform float4 end_color;
-uniform float end_step;
-uniform int alpha_percent = 100;
+uniform float4 start_color = { 0.1, 0.3, 0.1, 1.0 };
+uniform float start_step = 0.15;
+uniform float4 middle_color = { 1.0, 1.0, 1.0, 1.0 };
+uniform float middle_step = 0.4;
+uniform float4 end_color = { 0.75, 0.75, 0.75, 1.0};
+uniform float end_step = 0.9;
+uniform int alpha_percent = 90;
 uniform int pulse_speed = 0;
 uniform bool ease;
 uniform bool rotate_colors;
@@ -14,7 +14,7 @@ uniform bool horizontal;
 uniform bool vertical;
 uniform int gradient_center_width_percentage = 50;
 uniform int gradient_center_height_percentage = 50;
-uniform string notes;
+uniform string notes = "gradient center items will change the center location. Pulse Speed greater than 0 will animate. Easing seem to be too fast.";
 
 float EaseInOutCircTimer(float t, float b, float c, float d) {
 	t /= d / 2;

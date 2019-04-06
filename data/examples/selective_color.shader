@@ -15,32 +15,32 @@ uniform string notes = "defaults: .4,.03,.25,.25, 5.0, true,true, true, true. cu
 
 float4 mainImage(VertData v_in) : TARGET
 {
-	float PI = 3.1415926535897932384626433832795;//acos(-1);
-	float4 color = image.Sample(textureSampler, v_in.uv);
+	float PI		= 3.1415926535897932384626433832795;//acos(-1);
+	float4 color		= image.Sample(textureSampler, v_in.uv);
 
-	float luminance = (color.r + color.g + color.b)/3;
-	float4 gray = {luminance,luminance,luminance, 1};
+	float luminance		= (color.r + color.g + color.b)/3;
+	float4 gray		= {luminance,luminance,luminance, 1};
 
 	float redness		= max ( min ( color.r - color.g , color.r - color.b ) / color.r , 0);
 	float greenness		= max ( min ( color.g - color.r , color.g - color.b ) / color.g , 0);
 	float blueness		= max ( min ( color.b - color.r , color.b - color.g ) / color.b , 0);
 	
-	float rgLuminance = (color.r*1.4 + color.g*0.6)/2;
-	float rgDiff = abs(color.r-color.g)*1.4;
+	float rgLuminance	= (color.r*1.4 + color.g*0.6)/2;
+	float rgDiff		= abs(color.r-color.g)*1.4;
 
- 	float yellowness = 0.1 + rgLuminance * 1.2 - color.b - rgDiff;
+ 	float yellowness	= 0.1 + rgLuminance * 1.2 - color.b - rgDiff;
 
 	float4 accept;
-	accept.r  = show_Red * (redness - cutoff_Red);
-	accept.g  = show_Green * (greenness - cutoff_Green);
-	accept.b  = show_Blue * (blueness - cutoff_Blue);
-	accept[3] = show_Yellow * (yellowness - cutoff_Yellow);
+	accept.r		= show_Red * (redness - cutoff_Red);
+	accept.g		= show_Green * (greenness - cutoff_Green);
+	accept.b		= show_Blue * (blueness - cutoff_Blue);
+	accept[3]		= show_Yellow * (yellowness - cutoff_Yellow);
 
-	float acceptance = max (accept.r, max(accept.g, max(accept.b, max(accept[3],0))));
-	float modAcceptance = min (acceptance * acceptance_Amplifier, 1);
+	float acceptance	= max (accept.r, max(accept.g, max(accept.b, max(accept[3],0))));
+	float modAcceptance	= min (acceptance * acceptance_Amplifier, 1);
 
 	float4 result;
-	result = modAcceptance * color + (1.0-modAcceptance) * gray;
+	result			= modAcceptance * color + (1.0-modAcceptance) * gray;
 	//	result = float4(redness, greenness,blueness,1);
 
 	return result;

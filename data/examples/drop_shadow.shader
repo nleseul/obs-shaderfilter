@@ -1,8 +1,9 @@
 // Drop Shadow shader modified by Charles Fettinger 
 // impose a limiter to keep from crashing the system
-uniform int shadow_offset_x;
-uniform int shadow_offset_y;
-uniform int shadow_blur_size;
+uniform int shadow_offset_x = 5;
+uniform int shadow_offset_y = 5;
+uniform int shadow_blur_size = 3;
+uniform string notes = "blur size is limited to a max of 15 to ensure GPU";
 
 uniform float4 shadow_color;
 

@@ -1,13 +1,14 @@
-﻿// Rainbow shader by Charles Fettinger for obs-shaderfilter plugin 3/2019
+// Rainbow shader by Charles Fettinger for obs-shaderfilter plugin 3/2019
 // https://github.com/Oncorporation/obs-shaderfilter
-uniform float Saturation = 0.8; //<Range(0.0, 1.0)
-uniform float Luminosity = 0.5; //<Range(0.0, 1.0)
-uniform float Spread = 3.8; //<Range(0.5, 10.0)
-uniform float Speed = 2.4; //<Range(-10.0, 10.0)
+uniform float Saturation = 0.8; //<Range(0.0, 1.0)>
+uniform float Luminosity = 0.5; //<Range(0.0, 1.0)>
+uniform float Spread = 3.8; //<Range(0.5, 10.0)>
+uniform float Speed = 2.4; //<Range(-10.0, 10.0)>
 uniform bool Vertical;
 uniform bool Rotational;
-uniform float Rotation_Offset = 0.0; //<Range(0.0, 6.28318531)
+uniform float Rotation_Offset = 0.0; //<Range(0.0, 6.28318531)>
 uniform bool Apply_To_Image;
+uniform string notes = "Spread is wideness of color and is limited between .25 and 10. Edit at your own risk";
 
 float hueToRGB(float v1, float v2, float vH) {
 	if (vH < 0.0) vH+= 1.0;

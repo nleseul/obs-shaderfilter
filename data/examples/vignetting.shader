@@ -1,6 +1,7 @@
 uniform	float innerRadius = 0.9;
 uniform	float outerRadius = 1.5;
 uniform	float opacity = 0.8;
+uniform string notes = "inner radius will always be shown, outer radius is the falloff";
 
 float4 mainImage(VertData v_in) : TARGET
 {

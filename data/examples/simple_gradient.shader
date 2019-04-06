@@ -3,8 +3,9 @@
 
 //lots of room to play here
 
-uniform int speed_percentage = 240; //<Range(-10.0, 10.0)
+uniform int speed_percentage = 240; //<Range(-10.0, 10.0)>
 uniform int alpha_percentage = 100;
+uniform string notes = "There are a lot of code items you can play with in the file /* */ delimit";
 
 float4 mainImage(VertData v_in) : TARGET
 {

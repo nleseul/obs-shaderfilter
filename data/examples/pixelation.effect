@@ -26,7 +26,7 @@ VertData mainTransform(VertData v_in)
 	return vert_out;
 }
 
-uniform float pixelation;// <float min = 1; float step = 0.1;>;
+uniform float pixelation = 8;// <float min = 1; float step = 0.1;>;
 
 float4 mainImage(VertData v_in) : TARGET
 {
@@ -38,7 +38,7 @@ float4 mainImage(VertData v_in) : TARGET
 	pixelated_high = pixelated_low + ((strength - 1) / strength);
 	
 	return (image.Sample(textureSampler, pixelated_low * uv_pixel_interval) +
-			image.Sample(textureSampler, pixelated_high * uv_pixel_interval)) / 2.0;
+		image.Sample(textureSampler, pixelated_high * uv_pixel_interval)) / 2.0;
 }
 
 technique Draw

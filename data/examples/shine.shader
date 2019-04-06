@@ -9,7 +9,7 @@ uniform bool ease = false;
 uniform bool hide = false;
 uniform bool reverse = false;
 uniform bool glitch = false;
-uniform string notes = "'ease' makes the animation pause at the begin and end for a moment, 'hide' will make the image disappear, 'glitch' is random and amazing, 'reverse' quickly allows you to test settings";
+uniform string notes = "Use Luma Wipes ( C:\Program Files (x86)\OBS\obs-studio\data\obs-plugins\obs-transitions\luma_wipes ) 'ease' makes the animation pause at the begin and end for a moment, 'hide' will make the image disappear, 'glitch' is random and amazing, 'reverse' quickly allows you to test settings";
 
 uniform float start_adjust;
 uniform float stop_adjust;

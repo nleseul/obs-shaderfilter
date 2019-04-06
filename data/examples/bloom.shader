@@ -2,13 +2,15 @@
 // Bloom shader by Charles Fettinger for obs-shaderfilter plugin 3/2019
 //https://github.com/Oncorporation/obs-shaderfilter
 
-uniform int angleSteps = 12;
-uniform int radiusSteps = 10;
-uniform float ampFactor = 1.3;
-uniform string notes = "";
+uniform int Angle_Steps = 5; //<range 1 - 20>
+uniform int Radius_Steps = 9; //<range 0 - 20>
+uniform float ampFactor = 2.0;
+uniform string notes = "Steps limited in range from 0 to 20. Edit bloom.shader to remove limits at your own risk.";
 
 float4 mainImage(VertData v_in) : TARGET
 {
+	float radiusSteps = clamp(Radius_Steps, 0, 20);
+	float angleSteps = clamp(Angle_Steps, 1, 20);
 	float PI = 3.1415926535897932384626433832795;//acos(-1);
 	float minRadius = (0.0 * uv_pixel_interval.y);
 	float maxRadius = (10.0 * uv_pixel_interval.y);

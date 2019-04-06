@@ -8,10 +8,10 @@ uniform float2 uv_scale;
 uniform float2 uv_pixel_interval;
 uniform float rand_f;
 uniform float2 uv_size;
-uniform string notes;
+uniform string notes = "5/2 seems reasonable";
 
-uniform int hue_steps;
-uniform int value_steps;
+uniform int hue_steps = 5;
+uniform int value_steps = 2;
 
 sampler_state textureSampler {
     Filter    = Linear;

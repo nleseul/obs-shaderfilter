@@ -1,4 +1,4 @@
-# obs-shaderfilter
+# obs-shaderfilter 1.1
 
 ## Introduction
 
@@ -28,6 +28,7 @@ necessary files should look like this:
     |               |---pulse.effect
     |               |---rectangular_drop_shadow.shader
     |               |---rounded_rect.shader
+    |               |---many more...
     |           |---locale
     |               |---en-US.ini
     |---obs-plugins
@@ -56,7 +57,12 @@ or other parts of the effect for some reason, you can check the "Override entire
 Any parameters you add to your shader (defined as `uniform` variables) will be detected by the plugin and exposed
 in the properties window to have their values set. Currently, only `int`, `float`, `bool`, `string`, `texture2d`, and `float4`
 parameters are supported. (`float4` parameters will be interpreted by the properties window as colors.) `string` is used for 
-notes and instructions, but could be used in an effect or shader.
+notes and instructions, but could be used in an effect or shader. 
+
+#### Defaults
+
+You set default values as a normal assignment ```uniform string notes = 'my note';```, except for `float4` 
+which requires bracket \{\} notation like ```uniform float4 mycolor = { 0.75, 0.75, 0.75, 1.0};``` 
 
 Note that if your shader has syntax errors and fails to compile, OBS does not provide any error messages; you will
 simply see your source render nothing at all. In many cases the output of the effect parser will be written to the
@@ -88,7 +94,9 @@ handle these variables being missing, but the shader may malfunction.)
 Several examples are provided in the plugin's *data/examples* folder. These can be used as-is for some hopefully
 useful common tasks, or used as a reference in developing your own shaders. Note that the *.shader* and *.effect* 
 extensions are for clarity only, and have no specific meaning to the plugin. Text files with any extension can be
-loaded.
+loaded. 
+
+I recommend *.shader* do not require `override_entire_effect` as pixel shaders, while *.effect* signifies vertex shaders with `override_entire_effect` required.
 
 * *blink.shader*&mdash;A shader that fades the opacity of the output in and out over time, with a configurable speed
   multiplier. Demonstrates the user of the `elapsed_time` parameter.
@@ -105,6 +113,7 @@ loaded.
   not affect the internal effect template used by the plugin.)
 * *gradient.shader*&mdash; This shader has a little brother *simple_gradient.shader*, but lets you choose three colors and animate gradients.
 * *glitch_analog.shader*&mdash;A shader that creates glitch effects similar to analog signal issues. Includes support for alpha channel.   
+* *hexagon.shader*&mdash;A shader that creates a grid of hexagons with several options for you to set. This is an example of making shapes.
 * *luminance.shader*&mdash;A shader that adds an alpha layer based on brightness instead of color. Extremely useful for making live 
   video special effects, like replacing backgrounds or foregrounds.
 * *multiply.shader*&mdash;A shader that multiplies the input by another image specified in the parameters. Demonstrates the use 

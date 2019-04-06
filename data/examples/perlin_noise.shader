@@ -111,19 +111,20 @@ float pnoise(float2 P, float2 rep)
 }
  //The good bits~ adapting the noise generator for the plugin and giving some control over the shader
  //todo: pseudorandom number generator w/ seed
-uniform float speed;
+uniform float speed = 0.5;
 uniform bool animated;
 uniform bool apply_to_channel;
 uniform bool inverted;
 uniform bool multiply;
-uniform float speed_horizonal;
-uniform float speed_vertical;
-uniform float iterations;
+uniform float speed_horizonal = 0.5;
+uniform float speed_vertical = 0;
+uniform float iterations = 4;
 //how much c_noise do we want? white
-uniform float white_noise;
+uniform float white_noise = 0.5;
 //how much p_noise do we want? black
-uniform float black_noise;
-//todo: s_noise (simplex)
+uniform float black_noise = 0.5;
+uniform string notes = "white noise and black noise and iterations.. enjoy!";
+
  float2 noisePosition(float t){
 	return float2(sin(2.2 * t) - cos(1.4 * t), cos(1.3 * t) + sin(-1.9 *t));
 }

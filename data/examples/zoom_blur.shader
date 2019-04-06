@@ -2,12 +2,12 @@
 // https://github.com/Oncorporation/obs-shaderfilter
 // https://github.com/dinfinity/mpc-pixel-shaders/blob/master/PS_Zoom%20Blur.hlsl 
 //for Media Player Classic HC or BE
-uniform int samples = 64;
+uniform int samples = 32;
 uniform float magnitude = 0.5;
 uniform int speed_percent = 0;
-uniform bool ease = false;
-uniform bool glitch = false;
-uniform string notes;
+uniform bool ease;
+uniform bool glitch;
+uniform string notes = "Speed Percent above zero will animate the zoom. Keep samples low to save power";
 
 float EaseInOutCircTimer(float t,float b,float c,float d){
 	t /= d/2;

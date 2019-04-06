@@ -13,6 +13,8 @@
 #include <limits.h>
 #include <stdio.h>
 
+#define nullptr ((void*)0)
+
 static const char *effect_template_begin =
 "\
 uniform float4x4 ViewProj;\
@@ -250,39 +252,13 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 			// Nothing.
 		}
 		else
-		{
+		{			
 			struct effect_param_data *cached_data = da_push_back_new(filter->stored_param_list);
 			dstr_copy(&cached_data->name, info.name);
 			cached_data->type = info.type;
 			cached_data->param = param;
-
-			//switch (cached_data->type)
-			//{
-			//case GS_SHADER_PARAM_BOOL:
-			//	cached_data->value.i = gs_effect_get_default_val(param);
-			//	break;
-			//case GS_SHADER_PARAM_FLOAT:
-			//	//cached_data->value.f = gs_effect_get_default_val(param);
-			//	break;
-			//case GS_SHADER_PARAM_INT:
-			//	cached_data->value.i = gs_effect_get_default_val(param);
-			//	break;
-			//case GS_SHADER_PARAM_INT3:
-
-			//	break;
-			//case GS_SHADER_PARAM_VEC4:
-			//	cached_data->value.i = gs_effect_get_default_val(param);
-			//	break;
-			//case GS_SHADER_PARAM_TEXTURE:
-			//	
-			//	break;
-			//case GS_SHADER_PARAM_STRING:
-			//	cached_data->value.string = gs_effect_get_default_val(param);
-			//	break;
-			//}
-			
 		}
-	}
+	}	
 }
 
 static const char *shader_filter_get_name(void *unused)
@@ -495,19 +471,30 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 		switch (param->type)
 		{
 		case GS_SHADER_PARAM_BOOL:
+			if (gs_effect_get_default_val(param->param) != NULL)
+				obs_data_set_default_bool(settings, param_name, *(bool *)gs_effect_get_default_val(param->param));
 			param->value.i = obs_data_get_bool(settings, param_name);
 			break;
 		case GS_SHADER_PARAM_FLOAT:
+			if (gs_effect_get_default_val(param->param) != NULL)
+				obs_data_set_default_double(settings, param_name, *(float *)gs_effect_get_default_val(param->param));
 			param->value.f = obs_data_get_double(settings, param_name);
 			break;
 		case GS_SHADER_PARAM_INT:
+			if (gs_effect_get_default_val(param->param) != NULL)
+				obs_data_set_default_int(settings, param_name, *(int *)gs_effect_get_default_val(param->param));
 			param->value.i = obs_data_get_int(settings, param_name);
 			break;
 		case GS_SHADER_PARAM_VEC4: // Assumed to be a color.
-
-			// Hack to ensure we have a default...(white)
-			obs_data_set_default_int(settings, param_name, 0xffffffff);
-
+			if (gs_effect_get_default_val(param->param) != NULL)
+			{
+				obs_data_set_default_int(settings, param_name, *(unsigned int *)gs_effect_get_default_val(param->param));
+			}
+			else
+			{
+				// Hack to ensure we have a default...(white)
+				obs_data_set_default_int(settings, param_name, 0xffffffff);
+			}
 			param->value.i = obs_data_get_int(settings, param_name);
 			break;
 		case GS_SHADER_PARAM_TEXTURE:
@@ -529,8 +516,8 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 			obs_leave_graphics();
 			break;
 		case GS_SHADER_PARAM_STRING:
-			obs_data_set_default_string(settings, param_name, "");
-			//obs_data_set_default_string(settings, param_name, (const char)gs_effect_get_default_val(param));
+			if (gs_effect_get_default_val(param->param) != NULL)
+				obs_data_set_default_string(settings, param_name, (const char *)gs_effect_get_default_val(param->param));
 			
 			param->value.string = obs_data_get_string(settings, param_name);
 			break;
@@ -635,6 +622,8 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 		{
 			struct effect_param_data *param = (filter->stored_param_list.array + param_index);
 			struct vec4 color;
+			//void *defvalue = gs_effect_get_default_val(param->param);
+			//float tempfloat;
 
 			switch (param->type)
 			{

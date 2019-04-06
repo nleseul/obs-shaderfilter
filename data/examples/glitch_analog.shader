@@ -1,8 +1,8 @@
 
 // analog glitch shader by Charles Fettinger for obs-shaderfilter plugin 3/2019
 //https://github.com/Oncorporation/obs-shaderfilter
-uniform float scan_line_jitter_displacement; // (displacement, threshold)
-uniform int scan_line_jitter_threshold_percent;
+uniform float scan_line_jitter_displacement = 0.33; // (displacement, threshold)
+uniform int scan_line_jitter_threshold_percent = 95;
 uniform float vertical_jump_amount;
 uniform float vertical_speed;// (amount, speed)
 uniform float horizontal_shake;
@@ -11,7 +11,7 @@ uniform float color_drift_speed;// (amount, speed)
 uniform int pulse_speed_percent = 0;
 uniform int alpha_percent = 100;
 uniform bool rotate_colors;
-uniform string notes;
+uniform string notes ="play with settings!";
 
 
 float nrand(float x, float y)

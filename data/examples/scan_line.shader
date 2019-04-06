@@ -7,18 +7,19 @@ uniform bool lengthwise;
 //Do we want the scanlines to move?
 uniform bool animate;
 //How fast do we want those scanlines to move?
-uniform float speed;
+uniform float speed = 1000;
 //What angle should the scanlines come in at (based in degrees)
-uniform float angle;
+uniform float angle = 45;
 //Turns on adjustment of the results, sin returns -1 -> 1 these settings will change the results a bit
 //By default values for color range from 0 to 1
 //Boost centers the result of the sin wave on 1*, to help maintain the brightness of the screen
-uniform bool shift;
-uniform bool boost;
+uniform bool shift = true;
+uniform bool boost = true;
 //Increases the minimum value of the sin wave
 uniform float floor;
 //final adjustment to the period of the sin wave, we can't / 0, need to be careful w/ user input
 uniform float period;
+uniform string notes = "Do not set period to zero";
 float4 mainImage(VertData v_in) : TARGET
 {
 	//3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481 							3.141592653589793238462643383279502884197169399375105820974944592307816406286 

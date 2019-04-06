@@ -62,10 +62,10 @@ float4 mainImage(VertData v_in) : TARGET
 
 	// convert input for vector math
 	float blur_amount = (float)blur /100;
-	float glow_amount = (float)glow_percent / 10;
+	float glow_amount = (float)glow_percent * 0.1;
 	float speed = (float)pulse_speed * 0.01;	
-	float luminance_floor = float(min_brightness) /100;
-	float luminance_ceiling = float(max_brightness) /100;
+	float luminance_floor = float(min_brightness) * 0.01;
+	float luminance_ceiling = float(max_brightness) * 0.01;
 
 	float4 color = image.Sample(textureSampler, v_in.uv);
 	float4 temp_color = color;

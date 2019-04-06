@@ -1,5 +1,5 @@
 uniform float4 color;
-uniform float level;
+uniform float level = 10;
 uniform bool invertImageColor;
 uniform bool invertAlphaChannel;
 
