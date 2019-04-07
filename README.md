@@ -57,7 +57,7 @@ or other parts of the effect for some reason, you can check the "Override entire
 Any parameters you add to your shader (defined as `uniform` variables) will be detected by the plugin and exposed
 in the properties window to have their values set. Currently, only `int`, `float`, `bool`, `string`, `texture2d`, and `float4`
 parameters are supported. (`float4` parameters will be interpreted by the properties window as colors.) `string` is used for 
-notes and instructions, but could be used in an effect or shader. 
+notes and instructions, but could be used in an effect or shader. Variable names are displayed in the GUI with underscore replaced with space `uniform float Variable_Name` becomes `Variable Name`.
 
 #### Defaults
 
