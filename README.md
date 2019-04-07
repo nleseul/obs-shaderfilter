@@ -44,8 +44,7 @@ of the filter is "User-defined shader."
 
 Shaders can either be entered directly in a text box in the filter properties, or loaded from a file. To change 
 between the two modes, use the "Load shader text from file" toggle. If you are entering your shader text directly,
-note that you will need to use the "Reload effect" button to apply your changes. This can also be used to reload an
-external file if changes have been made. OBS shaders appear to be written in HLSL, but I'm not completely sure.
+note that you will need to use the "Reload effect" button to apply your changes. This can also be used to reload an external file if changes have been made. OBS shaders are written in HLSL.
 
 The option is provided to render extra pixels on each side of the source. This is useful for effects like shadows
 that need to render outside the bounds of the original source. 
