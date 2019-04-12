@@ -4,10 +4,12 @@ uniform float Saturation = 0.8; //<Range(0.0, 1.0)>
 uniform float Luminosity = 0.5; //<Range(0.0, 1.0)>
 uniform float Spread = 3.8; //<Range(0.5, 10.0)>
 uniform float Speed = 2.4; //<Range(-10.0, 10.0)>
+uniform float Alpha = 1.0; //<Range(0.0,1.0)>
 uniform bool Vertical;
 uniform bool Rotational;
 uniform float Rotation_Offset = 0.0; //<Range(0.0, 6.28318531)>
 uniform bool Apply_To_Image;
+uniform bool Replace_Image_Color;
 uniform string notes = "Spread is wideness of color and is limited between .25 and 10. Edit at your own risk";
 
 float hueToRGB(float v1, float v2, float vH) {
@@ -53,7 +55,7 @@ float4 mainImage(VertData v_in) : TARGET
 	float time = (elapsed_time * clamp(Speed, -5.0, 5.0)) / clamp(Spread, 0.25, 10.0);	
 
 	//set colors and direction
-	float hue = (-1 * lPos.y) / 2.0;
+	float hue = (-1 * lPos.x) / 2.0;
 
 	if (Rotational && (Vertical == false))
 	{
@@ -65,7 +67,7 @@ float4 mainImage(VertData v_in) : TARGET
 
 	if (Vertical && (Rotational == false))
 	{
-		hue = (-1 * lPos.x) / 2.0;
+		hue = (-1 * lPos.y) / 2.0;
 	}	
 
 	hue += time;
@@ -73,9 +75,16 @@ float4 mainImage(VertData v_in) : TARGET
 	while (hue > 1.0) hue -= 1.0;
 	float4 hsl = float4(hue, clamp(Saturation, 0.0, 1.0), clamp(Luminosity, 0.0, 1.0), 1.0);
 	float4 rgba = HSLtoRGB(hsl);
+	
 	if (Apply_To_Image)
 	{
-		rgba *= image.Sample(textureSampler, v_in.uv);
+		float4 color = image.Sample(textureSampler, v_in.uv);
+		float4 original_color = color;
+		float4 luma = dot(color,float4(0.30, 0.59, 0.11, 1.0));
+		if (Replace_Image_Color)
+			color = luma;
+		rgba = lerp(original_color, rgba * color,clamp(Alpha,0,1.0));
+		
 	}
 	return rgba;
 }

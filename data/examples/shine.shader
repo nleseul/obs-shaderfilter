@@ -5,6 +5,7 @@ uniform texture2d l_tex;
 uniform float4 shine_color ;
 uniform int speed_percent = 100;
 uniform int gradient_percent = 20;
+uniform bool Apply_To_Alpha_Layer = false;
 uniform bool ease = false;
 uniform bool hide = false;
 uniform bool reverse = false;
@@ -95,7 +96,9 @@ float4 mainImage(VertData v_in) : TARGET
 		// if behind glow, consider trailing gradient shine then show underlying image
 		if (luma <= time - softness)
 		{
-			float alpha_behind = clamp(1.0 - (time - softness - luma ) / softness, 0.00, 1.0);		
+			float alpha_behind = clamp(1.0 - (time - softness - luma ) / softness, 0.00, 1.0);	
+			if (Apply_To_Alpha_Layer)
+				alpha_behind *= rgba.a;
 			return lerp(rgba, rgba + output_color, alpha_behind);		
 		}
 
@@ -115,6 +118,8 @@ float4 mainImage(VertData v_in) : TARGET
 
 		// else show the glow area, with luminance
 		float alpha = (time - luma) / softness;
+		if (Apply_To_Alpha_Layer)
+			alpha *= rgba.a;
 		return lerp(rgba, rgba + output_color, alpha);
 	}
 	else
