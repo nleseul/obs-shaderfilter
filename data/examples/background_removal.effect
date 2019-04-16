@@ -11,8 +11,8 @@ uniform float2 uv_size;
 uniform string notes = "Opacity between 10 and 20 works. Adjust `Color` from white to fix environmental changes.\r\r\nUsage:\r\n1) Disable `Auto` settings like focus, white balance, etc.\r\n2) Take a video of just the background. \r\n3) Take a frame and use it as the background image. Windows Snipping Tool (%windir%\\system32\\SnippingTool.exe). \r\r\nThis eliminates differences based upon camera/video settings.";
 
 uniform texture2d target;
-uniform float4 color = {0.98,1.0,0.98,1.0};
-uniform float opacity = 100.0;
+uniform float4 color;
+uniform float opacity = 15.0;
 uniform bool Convert_709to601;
 uniform bool Convert_601to709;
 
