@@ -76,8 +76,8 @@ float4 PSColorMaskRGBA(VertDataOut v_in) : TARGET
 
 	if (Convert_601to709)
 	{
-		rgba.rgb = Convert601to709(rgba, v_in.uv);
-		targetRGB.rbg = Convert601to709(targetRGB, v_in.uv2);
+		rgba.rgb = Convert601to709(rgba);
+		targetRGB.rbg = Convert601to709(targetRGB);
 	}	
 
 	float4 shadowRGB = targetRGB * targetRGB;
