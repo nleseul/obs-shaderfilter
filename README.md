@@ -97,6 +97,7 @@ loaded.
 
 I recommend *.shader* do not require `override_entire_effect` as pixel shaders, while *.effect* signifies vertex shaders with `override_entire_effect` required.
 
+* *background_removal.effect*&mdash; simple implementation of background removal. Optional color space corrections
 * *blink.shader*&mdash;A shader that fades the opacity of the output in and out over time, with a configurable speed
   multiplier. Demonstrates the user of the `elapsed_time` parameter.
 * *bloom.shader / glow.shader*&mdash; simple shaders to add glow or bloom effects, the glow shader has some additional options for animation
@@ -131,18 +132,19 @@ I recommend *.shader* do not require `override_entire_effect` as pixel shaders, 
 * *repeat.effect* (Overrides entire effect)&mdash;Duplicates the input video as many times as you like and organizes on the screen.
 * *rounded_rect.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded 
   edges.
-* *scan_line.shader* &mdash;An effect that creates old style tv scan lines, for glitch style effects. 
+* *scan_line.shader*&mdash;An effect that creates old style tv scan lines, for glitch style effects. 
 * *selective_color.shader*&mdash;Create black and white effects with some colorization. (defaults: .4,.03,.25,.25, 5.0, true,true, true, true. cuttoff higher = less color, 0 = all 1 = none)
 * *shake.effect* (Overrides entire effect)&mdash;creates random screen glitch style shake. Keep the random_scale low for small (0.2-1) for small
   jerky movements and larger for less often big jumps.
-* *shine.shader* &mdash;Add shine / glow to any element, use the transition luma wipes (obs-studio\plugins\obs-transitions\data\luma_wipes *SOME NEW WIPES INCLUDED IN THIS RELEASE ZIP*) or create your own, 
+* *spotlight.shader*&mdash;Creates a stationary or animated spotlight effect with color options, speed of animation and glitch
+* *shine.shader*&mdash;Add shine / glow to any element, use the transition luma wipes (obs-studio\plugins\obs-transitions\data\luma_wipes *SOME NEW WIPES INCLUDED IN THIS RELEASE ZIP*) or create your own, 
    also includes a glitch (using rand_f), hide/reveal, reverse and ease, start adjustment and stop adjustment
    video explanation of usage [Twitch.tv/videos/396724980](https://www.twitch.tv/videos/396724980)
-* *vignetting.shader* &mdash;A shader that reduces opacity further from the center of the image. inner radius is the start and outer radius is the end.
+* *vignetting.shader*&mdash;A shader that reduces opacity further from the center of the image. inner radius is the start and outer radius is the end.
     suggested default settings is opacity 0.5, innerRadius = 0.5, outerRadius = 1.2
-* *zoom_blur.shader* &mdash;A shader that creates a zoom with blur effect based on a number of samples and magnitude of each sample. It also includes
+* *zoom_blur.shader*&mdash;A shader that creates a zoom with blur effect based on a number of samples and magnitude of each sample. It also includes
    an animation with or without easing and a glitch option. Set speed to zero to not use animation. Suggested values are 15 samples and 30-50 magnitude.
-* *other* &mdash; I have far too many shaders to list. Please check [Examples folder](https://github.com/Oncorporation/obs-shaderfilter/tree/master/data/examples)
+* *other*&mdash; I have far too many shaders to list. Please check [Examples folder](https://github.com/Oncorporation/obs-shaderfilter/tree/master/data/examples)
    or find me on discord, as I have many additional filters for fixing input problems. 
 
 ## Building
