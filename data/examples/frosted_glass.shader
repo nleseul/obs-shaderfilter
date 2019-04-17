@@ -1,30 +1,36 @@
-uniform float Alpha = 100.0;
-uniform float Amount = 0.05;
-uniform float Scale = 5.1;
-uniform float Offset = 1.0;
-uniform string notes = "Change Offset, Scale and Amount";
+// Frosted Glass shader by Charles Fettinger for obs-shaderfilter plugin 4/2019
+//https://github.com/Oncorporation/obs-shaderfilter
 
-float rand(vec2 co)
+uniform float Alpha_Percent = 100.0;
+uniform float Amount = 0.03;
+uniform float Scale = 5.1;
+uniform bool Animate;
+uniform float Border_Offset = 1.1;
+uniform float4 Border_Color = {.8,.5,1.0,1.0};
+uniform string notes = "Change shader with Scale and Amount, move Border with Border Offset. Alpha is Opacity of entire scene.";
+
+float rand(float2 co)
 {
-	float2 v1 = float2(92.,80.);
-	float2 v2 = float2(41.,62.);
-	return fract(sin(dot(co.xy ,v1)) + cos(dot(co.xy ,v2)) * Scale);
+	float scale = Scale;
+	if (Animate)
+		scale *= rand_f;
+	float2 v1 = float2(92.0,80.0);
+	float2 v2 = float2(41.0,62.0);
+	return frac(sin(dot(co.xy ,v1)) + cos(dot(co.xy ,v2)) * scale);
 }
 
 float4 mainImage(VertData v_in) : TARGET
 {
-
-	float3 tc = float3(1.0,0,0);
+	float3 tc = image.Sample(textureSampler, v_in.uv).rgb * Border_Color.rgb;
 	
-	if (v_in.uv.x < (Offset + 0.005))
+	if (v_in.uv.x < (Border_Offset - 0.005))
 	{
-		//float2 rand = float2(rand(v_in.uv.yx),rand(v_in.uv.yx));
-		//tc = image.Sample(textureSampler, v_in.uv + (rand*Amount)).rgb;
-		tc = image.Sample(textureSampler, v_in.uv + (rand_f*Amount*Scale)).rgb;
+		float2 randv = float2(rand(v_in.uv.yx),rand(v_in.uv.yx));
+		tc = image.Sample(textureSampler, v_in.uv + (randv*Amount)).rgb;		
 	}
-	else
+	else if (v_in.uv.x >= (Border_Offset + 0.005))
 	{
 		tc = image.Sample(textureSampler, v_in.uv).rgb;
 	}
-	return float4(tc,(Alpha * 0.01));
+	return float4(tc,(Alpha_Percent * 0.01));
 }
