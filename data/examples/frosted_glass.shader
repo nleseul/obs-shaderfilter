@@ -7,7 +7,7 @@ uniform float Scale = 5.1;
 uniform bool Animate;
 uniform float Border_Offset = 1.1;
 uniform float4 Border_Color = {.8,.5,1.0,1.0};
-uniform string notes = "Change shader with Scale and Amount, move Border with Border Offset. Alpha is Opacity of entire scene.";
+uniform string notes = "Change shader with Scale and Amount, move Border with Border Offset. Alpha is Opacity of overlay.";
 
 float rand(float2 co)
 {
@@ -21,7 +21,8 @@ float rand(float2 co)
 
 float4 mainImage(VertData v_in) : TARGET
 {
-	float3 tc = image.Sample(textureSampler, v_in.uv).rgb * Border_Color.rgb;
+	float4 rgba = image.Sample(textureSampler, v_in.uv);
+	float3 tc = rgba.rgb * Border_Color.rgb;
 	
 	if (v_in.uv.x < (Border_Offset - 0.005))
 	{
@@ -32,5 +33,5 @@ float4 mainImage(VertData v_in) : TARGET
 	{
 		tc = image.Sample(textureSampler, v_in.uv).rgb;
 	}
-	return float4(tc,(Alpha_Percent * 0.01));
+	return lerp(rgba,float4(tc,1.0),(Alpha_Percent * 0.01));
 }
