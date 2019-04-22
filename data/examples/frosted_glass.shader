@@ -5,6 +5,7 @@ uniform float Alpha_Percent = 100.0;
 uniform float Amount = 0.03;
 uniform float Scale = 5.1;
 uniform bool Animate;
+uniform bool Horizontal_Border;
 uniform float Border_Offset = 1.1;
 uniform float4 Border_Color = {.8,.5,1.0,1.0};
 uniform string notes = "Change shader with Scale and Amount, move Border with Border Offset. Alpha is Opacity of overlay.";
@@ -24,12 +25,16 @@ float4 mainImage(VertData v_in) : TARGET
 	float4 rgba = image.Sample(textureSampler, v_in.uv);
 	float3 tc = rgba.rgb * Border_Color.rgb;
 	
-	if (v_in.uv.x < (Border_Offset - 0.005))
+	float uv_compare = v_in.uv.x;
+	if (Horizontal_Border)
+		uv_compare = v_in.uv.y;
+
+	if (uv_compare < (Border_Offset - 0.005))
 	{
 		float2 randv = float2(rand(v_in.uv.yx),rand(v_in.uv.yx));
 		tc = image.Sample(textureSampler, v_in.uv + (randv*Amount)).rgb;		
 	}
-	else if (v_in.uv.x >= (Border_Offset + 0.005))
+	else if (uv_compare >= (Border_Offset + 0.005))
 	{
 		tc = image.Sample(textureSampler, v_in.uv).rgb;
 	}

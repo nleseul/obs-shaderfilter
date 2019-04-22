@@ -6,10 +6,11 @@ uniform float Offset_Amount = 0.8;
 uniform int xSize = 8;
 uniform int ySize = 8;
 uniform int Reflection_Offset = 2;
+uniform bool Horizontal_Border;
+uniform float Border_Offset = 0.5;
 uniform float4 Border_Color = {.8,.5,1.0,1.0};
 uniform float4 Glass_Color;
-uniform float Border_Offset = 0.5;
-uniform string notes = "";
+uniform string notes = "xSize, ySize are for distortion, Offset Amount and Reflection Offset change class properties";
 
 
 
@@ -28,11 +29,15 @@ float4 mainImage(VertData v_in) : TARGET
 	rgba = image.Sample(textureSampler, uv);
 	float4 rgba_glass = image.Sample(textureSampler, uv2);
 	
-	if (v_in.uv.x < (Border_Offset - 0.005))
+	float uv_compare = v_in.uv.x;
+	if (Horizontal_Border)
+		uv_compare = v_in.uv.y;
+
+	if (uv_compare < (Border_Offset - 0.005))
 	{
 			rgba_output = (rgba + rgba_glass) *.5 * Glass_Color;
 	}
-	else if (v_in.uv.x >= (Border_Offset + 0.005))
+	else if (uv_compare >= (Border_Offset + 0.005))
 	{
 		rgba_output = image.Sample(textureSampler, v_in.uv);
 	}
