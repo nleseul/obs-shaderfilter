@@ -10,7 +10,7 @@ uniform bool Horizontal_Border;
 uniform float Border_Offset = 0.5;
 uniform float4 Border_Color = {.8,.5,1.0,1.0};
 uniform float4 Glass_Color;
-uniform string notes = "xSize, ySize are for distortion, Offset Amount and Reflection Offset change class properties";
+uniform string notes = "xSize, ySize are for distortion. Offset Amount and Reflection Offset change glass properties. Alpha is Opacity of overlay.";
 
 
 
