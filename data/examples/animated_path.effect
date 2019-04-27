@@ -1,0 +1,88 @@
+// Path effect By Charles Fettinger (https://github.com/Oncorporation)  3/2019
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float elapsed_time;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
+uniform float2 uv_pixel_interval;
+uniform float rand_f;
+
+uniform int speed_percent = 100;
+uniform texture2d path_map;
+uniform bool reverse = false;
+
+sampler_state textureSampler {
+	Filter    = Linear;
+	AddressU  = Border;
+	AddressV  = Border;
+	BorderColor = 00000000;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+float4 convert_pmalpha(float4 color)
+{
+	float4 ret = color;
+	if (color.a >= 0.001)
+		ret.xyz /= color.a;
+	else
+		ret = float4(0.0, 0.0, 0.0, 0.0);
+	return ret;
+}
+
+VertData mainTransform(VertData v_in)
+{
+	VertData vert_out;
+	float3 pos = v_in.pos.xyz;
+	float3 current_pos;
+	float speed = (float)speed_percent * 0.01;
+	//vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+	float t = 1.0 + sin(elapsed_time * speed) ;
+	// combine luma texture and user defined shine color
+	float luma = path_map.Sample(textureSampler, v_in.uv).x;
+	if (reverse)
+	{
+		luma = 1.0 - luma;
+	}
+
+	float time = lerp(0.0f, 1.0f , t - 1.0);
+
+	// set current position in time
+	current_pos.x = 0;
+	current_pos.y = 0;
+
+
+	float2 offset = uv_offset;
+	if (speed == 0.0f)
+	{
+		offset.x = 0.0f;
+		offset.y = 0.0f
+	}
+	else
+	{
+		offset.x = uv_offset.x + time * luma;
+		offset.y = uv_offset.y + time * luma;
+	}
+
+	vert_out.pos = mul(float4(current_pos, 1), ViewProj);
+	vert_out.uv  = v_in.uv * uv_scale + offset;
+	return vert_out;
+}
+
+float4 mainImage(VertData v_in) : TARGET
+{
+	return image.Sample(textureSampler, v_in.uv);
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = mainTransform(v_in);
+		pixel_shader  = mainImage(v_in);
+	}
+}
