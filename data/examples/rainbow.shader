@@ -4,20 +4,20 @@ uniform float Saturation = 0.8; //<Range(0.0, 1.0)>
 uniform float Luminosity = 0.5; //<Range(0.0, 1.0)>
 uniform float Spread = 3.8; //<Range(0.5, 10.0)>
 uniform float Speed = 2.4; //<Range(-10.0, 10.0)>
-uniform float Alpha = 1.0; //<Range(0.0,1.0)>
+uniform float Alpha_Percentage = 100; //<Range(0.0,100.0)>
 uniform bool Vertical;
 uniform bool Rotational;
 uniform float Rotation_Offset = 0.0; //<Range(0.0, 6.28318531)>
 uniform bool Apply_To_Image;
 uniform bool Replace_Image_Color;
-uniform string notes = "Spread is wideness of color and is limited between .25 and 10. Edit at your own risk";
+uniform string Notes = "Spread is wideness of color and is limited between .25 and 10. Edit at your own risk";
 
 float hueToRGB(float v1, float v2, float vH) {
 	if (vH < 0.0) vH+= 1.0;
 	if (vH > 1.0) vH -= 1.0;
 	if ((6.0 * vH) < 1.0) return (v1 + (v2 - v1) * 6.0 * vH);
 	if ((2.0 * vH) < 1.0) return (v2);
-	if ((3.0 * vH) < 2.0) return (v1 + (v2 - v1) * ((2.0 / 3.0) - vH) * 6.0);
+	if ((3.0 * vH) < 2.0) return (v1 + (v2 - v1) * ((0.6666666666666667) - vH) * 6.0);
 	return v1;
 }
 
@@ -40,9 +40,9 @@ float4 HSLtoRGB(float4 hsl) {
 		
 		v1 = 2.0 * hsl.z - v2;
 		
-		rgb.x = hueToRGB(v1, v2, hsl.x + (1.0 / 3.0));
+		rgb.x = hueToRGB(v1, v2, hsl.x + (0.3333333333333333));
 		rgb.y = hueToRGB(v1, v2, hsl.x);
-		rgb.z = hueToRGB(v1, v2, hsl.x - (1.0 / 3.0));
+		rgb.z = hueToRGB(v1, v2, hsl.x - (0.3333333333333333));
 		
 	}
 	
@@ -62,12 +62,12 @@ float4 mainImage(VertData v_in) : TARGET
 		float timeWithOffset = time + Rotation_Offset;
 		float sine = sin(timeWithOffset);
 		float cosine = cos(timeWithOffset);
-		hue = (lPos.x * cosine + lPos.y * sine) / 2.0;
+		hue = (lPos.x * cosine + lPos.y * sine) * 0.5;
 	}
 
 	if (Vertical && (Rotational == false))
 	{
-		hue = (-1 * lPos.y) / 2.0;
+		hue = (-1 * lPos.y) * 0.5;
 	}	
 
 	hue += time;
@@ -83,7 +83,7 @@ float4 mainImage(VertData v_in) : TARGET
 		float4 luma = dot(color,float4(0.30, 0.59, 0.11, 1.0));
 		if (Replace_Image_Color)
 			color = luma;
-		rgba = lerp(original_color, rgba * color,clamp(Alpha,0,1.0));
+		rgba = lerp(original_color, rgba * color,clamp(Alpha_Percentage *.01 ,0,1.0));
 		
 	}
 	return rgba;
