@@ -13,12 +13,11 @@ uniform bool Replace_Image_Color;
 uniform string Notes = "Spread is wideness of color and is limited between .25 and 10. Edit at your own risk";
 
 float hueToRGB(float v1, float v2, float vH) {
-	if (vH < 0.0) vH+= 1.0;
-	if (vH > 1.0) vH -= 1.0;
+	vH = frac(vH);
 	if ((6.0 * vH) < 1.0) return (v1 + (v2 - v1) * 6.0 * vH);
 	if ((2.0 * vH) < 1.0) return (v2);
 	if ((3.0 * vH) < 2.0) return (v1 + (v2 - v1) * ((0.6666666666666667) - vH) * 6.0);
-	return v1;
+	return clamp(v1, 0.0, 1.0);
 }
 
 float4 HSLtoRGB(float4 hsl) {
@@ -71,8 +70,7 @@ float4 mainImage(VertData v_in) : TARGET
 	}	
 
 	hue += time;
-	while (hue < 0.0) hue += 1.0;
-	while (hue > 1.0) hue -= 1.0;
+	hue = frac(hue);
 	float4 hsl = float4(hue, clamp(Saturation, 0.0, 1.0), clamp(Luminosity, 0.0, 1.0), 1.0);
 	float4 rgba = HSLtoRGB(hsl);
 	
