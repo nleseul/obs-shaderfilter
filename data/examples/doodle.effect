@@ -1,3 +1,5 @@
+// doodle effect by Charles Fettinger (https://github.com/Oncorporation)  5/2019
+// for use with obs-shaderfilter 1.0
 uniform float4x4 ViewProj;
 uniform texture2d image;
 
@@ -38,7 +40,7 @@ float3 rand3(float3 co)
 
 float snap(float x, float snap)
 {
-	return snap * round(x / snap);
+	return snap * round(x / max(0.01,snap));
 }
 
 VertData mainTransform(VertData v_in)

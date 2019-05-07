@@ -8,12 +8,11 @@ uniform float2 uv_pixel_interval;
 uniform float rand_f;
 uniform float2 uv_size;
 
-uniform string Notes = "Higher is more pixelation. Doodle skews the image by the Scale Percent, Snap Percent controls the number of doodles per second.";
 uniform float pixelation = 8;// <float min = 1; float step = 0.1;>;
 uniform bool doodle = false;
 uniform float Doodle_Scale_Percent = 2.5;
 uniform float Snap_Percent= 7.5;
-
+uniform string Notes = "Higher is more pixelation. Doodle skews the image by the Scale Percent, Snap Percent controls the number of doodles per second.";
 
 sampler_state textureSampler {
 	Filter    = Linear;
