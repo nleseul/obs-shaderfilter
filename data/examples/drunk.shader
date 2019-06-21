@@ -100,15 +100,18 @@ float4 mainImage(VertData v_in) : TARGET
 			glitch_on) //test for rand color
 		{
 			//glow calc
-			ncolor.a = clamp(ncolor.a * glow_amount, 0.0, 1.0);
-			//temp_color = max(temp_color,ncolor) * glow_color ;//* ((1-ncolor.a) + color * ncolor.a);
-			//temp_color += (ncolor * float4(glow_color.rbg, glow_amount));
+			if (ncolor.a > 0.0)
+			{
+				ncolor.a = clamp(ncolor.a * glow_amount, 0.0, 1.0);
+				//temp_color = max(temp_color,ncolor) * glow_color ;//* ((1-ncolor.a) + color * ncolor.a);
+				//temp_color += (ncolor * float4(glow_color.rbg, glow_amount));
 
-			// use temp_color as floor, add glow, use highest alpha of blur pixels, then multiply by glow color
-			// max is used to simulate addition of vector texture color
-			temp_color = float4(max(temp_color.rgb,ncolor.rgb * (glow_amount * (b/2))),  // color effected by glow over time
-						max(temp_color.a, (glow_amount * (b/2))))  // alpha effected by glow over time
-						* (glitch_color * (b/2)); // glow color effected by glow over time
+				// use temp_color as floor, add glow, use highest alpha of blur pixels, then multiply by glow color
+				// max is used to simulate addition of vector texture color
+				temp_color = float4(max(temp_color.rgb, ncolor.rgb * (glow_amount * (b / 2))),  // color effected by glow over time
+					max(temp_color.a, (glow_amount * (b / 2))))  // alpha effected by glow over time
+					* (glitch_color * (b / 2)); // glow color effected by glow over time
+			}
 		}
 	}
 	// grab lighter color
