@@ -5,14 +5,14 @@ uniform texture2d l_tex;
 uniform float4 shine_color ;
 uniform int speed_percent = 100;
 uniform int gradient_percent = 20;
-uniform int delay_percent = 0;
+uniform int delay_percent = 100;
 uniform bool Apply_To_Alpha_Layer = false;
 uniform bool ease = false;
 uniform bool hide = false;
 uniform bool reverse = false;
 uniform bool One_Direction = false;
 uniform bool glitch = false;
-uniform string notes = "Use Luma Wipes ( C:\Program Files (x86)\OBS\obs-studio\data\obs-plugins\obs-transitions\luma_wipes ) 'ease' makes the animation pause at the begin and end for a moment, 'hide' will make the image disappear, 'glitch' is random and amazing, 'reverse' quickly allows you to test settings";
+uniform string notes = "Use Luma Wipes ( C:\Program Files (x86)\OBS\obs-studio\data\obs-plugins\obs-transitions\luma_wipes ) 'ease' makes the animation pause at the begin and end for a moment, 'hide' will make the image disappear, 'glitch' is random and amazing, 'reverse' quickly allows you to test settings, 'One Direction' only shows the shine as it travels in one direction, 'delay percentage' adds a delay between shines (but requires an adjustment to speed: good values [speed,delay]:[100,100], [,], [,], [,]).";
 
 uniform float start_adjust;
 uniform float stop_adjust;
@@ -75,7 +75,7 @@ float4 mainImage(VertData v_in) : TARGET
 	
 	float hidden = 0.0;
 	if (delay > 0.0)
-		hidden = (1 / cos((PI * elapsed_time * speed) * (1 / (1 + delay))));
+		hidden = (1 / sin((elapsed_time * speed) * (1 / delay)));
 		//pow(sin((elapsed_time * speed) / (1.0 + delay)),5.0) * sin((elapsed_time * speed) / (1.0 + delay));
 	float t = sin(elapsed_time* speed);
 	
