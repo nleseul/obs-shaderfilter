@@ -3,16 +3,16 @@
 // slerp not currently used, for circular effects
 uniform texture2d l_tex;
 uniform float4 shine_color ;
-uniform int speed_percent = 100;
+uniform int speed_percent = 25;
 uniform int gradient_percent = 20;
-uniform int delay_percent = 100;
+uniform int delay_percent = 50;
 uniform bool Apply_To_Alpha_Layer = false;
 uniform bool ease = false;
 uniform bool hide = false;
 uniform bool reverse = false;
-uniform bool One_Direction = false;
+uniform bool One_Direction = true;
 uniform bool glitch = false;
-uniform string notes = "Use Luma Wipes ( C:\Program Files (x86)\OBS\obs-studio\data\obs-plugins\obs-transitions\luma_wipes ) 'ease' makes the animation pause at the begin and end for a moment, 'hide' will make the image disappear, 'glitch' is random and amazing, 'reverse' quickly allows you to test settings, 'One Direction' only shows the shine as it travels in one direction, 'delay percentage' adds a delay between shines (requires adjustment to speed: https://www.desmos.com/calculator/q2k0had932 )";
+uniform string notes = "Use Luma Wipes ( C:\Program Files (x86)\OBS\obs-studio\data\obs-plugins\obs-transitions\luma_wipes ) 'ease' makes the animation pause at the begin and end for a moment, 'hide' will make the image disappear, 'glitch' is random and amazing, 'reverse' quickly allows you to test settings, 'One Direction' only shows the shine as it travels in one direction, 'delay percentage' adds a delay between shines (requires adjustment to speed: https://www.desmos.com/calculator/wkgbndweyt )";
 
 uniform float start_adjust;
 uniform float stop_adjust;
@@ -79,7 +79,7 @@ float4 mainImage(VertData v_in) : TARGET
 	// split into segments with frac or mod.
 	// delay is the gap between starting and ending of the sine wave, use speed to compensate
 	t = (frac(t) - delay) * (1 / (1 - delay));
-	t = 1 + t;
+	t = 1 + max(t,0.0);
 
 	float b = 0.0; //start value
 	float c = 2.0; //change value
