@@ -12,7 +12,7 @@ uniform bool hide = false;
 uniform bool reverse = false;
 uniform bool One_Direction = false;
 uniform bool glitch = false;
-uniform string notes = "Use Luma Wipes ( C:\Program Files (x86)\OBS\obs-studio\data\obs-plugins\obs-transitions\luma_wipes ) 'ease' makes the animation pause at the begin and end for a moment, 'hide' will make the image disappear, 'glitch' is random and amazing, 'reverse' quickly allows you to test settings, 'One Direction' only shows the shine as it travels in one direction, 'delay percentage' adds a delay between shines (but requires an adjustment to speed: good values [speed,delay]:[100,100], [,], [,], [,]).";
+uniform string notes = "Use Luma Wipes ( C:\Program Files (x86)\OBS\obs-studio\data\obs-plugins\obs-transitions\luma_wipes ) 'ease' makes the animation pause at the begin and end for a moment, 'hide' will make the image disappear, 'glitch' is random and amazing, 'reverse' quickly allows you to test settings, 'One Direction' only shows the shine as it travels in one direction, 'delay percentage' adds a delay between shines (requires adjustment to speed: good values [speed,delay]:[100,100], [,], [,], [,]).";
 
 uniform float start_adjust;
 uniform float stop_adjust;
@@ -65,24 +65,20 @@ float4 mainImage(VertData v_in) : TARGET
 	float4 rgba = convert_pmalpha(image.Sample(textureSampler, v_in.uv));
 	float speed = (float)speed_percent * 0.01;	
 	float softness = max(abs((float)gradient_percent * 0.01), 0.01) * sign(gradient_percent);
-	float delay = max((float)delay_percent * 0.01, 0.01);
+	float delay = clamp((float)delay_percent * 0.01, 0.0, 1.0);
 	
 
 	// circular easing variable
 	float PI = 3.1415926535897932384626433832795;//acos(-1);
-	float direction = cos(elapsed_time * speed);
-	//float t = 1.0 + cos(PI* elapsed_time * speed);//
-	
-	float hidden = 0.0;
-	if (delay > 0.0)
-		hidden = (1 / sin((elapsed_time * speed) * (1 / delay)));
-		//pow(sin((elapsed_time * speed) / (1.0 + delay)),5.0) * sin((elapsed_time * speed) / (1.0 + delay));
-	float t = sin(elapsed_time* speed);
-	
-	if (t < hidden)
-	{
-		t = 0;
-	}
+	float direction = abs(sin((elapsed_time - 0.001) * speed));	
+	float t = abs(sin(elapsed_time * speed));
+
+	// if time is greater than direction, we are going up!
+	direction = t - direction;
+
+	// split into segments with frac or mod.
+	// delay is the gap between starting and ending of the sine wave, use speed to compensate
+	t = (frac(t) - delay) * (1 / (1 - delay));
 	t = 1 + t;
 
 	float b = 0.0; //start value
