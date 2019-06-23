@@ -6,8 +6,8 @@ uniform int glow_percent = 10;
 uniform int blur = 1;
 uniform int min_brightness= 27;
 uniform int max_brightness = 100;
-uniform int pulse_speed = 0;
-
+uniform int pulse_speed_percent = 0;
+uniform bool Apply_To_Alpha_Layer = true;
 uniform float4 glow_color;
 uniform bool ease;
 uniform bool glitch;
@@ -63,7 +63,7 @@ float4 mainImage(VertData v_in) : TARGET
 	// convert input for vector math
 	float blur_amount = (float)blur /100;
 	float glow_amount = (float)glow_percent * 0.1;
-	float speed = (float)pulse_speed * 0.01;	
+	float speed = (float)pulse_speed_percent * 0.01;	
 	float luminance_floor = float(min_brightness) * 0.01;
 	float luminance_ceiling = float(max_brightness) * 0.01;
 
@@ -100,7 +100,7 @@ float4 mainImage(VertData v_in) : TARGET
 			glitch_on) //test for rand color
 		{
 			//glow calc
-			if (ncolor.a > 0.0)
+			if (ncolor.a > 0.0  || Apply_To_Alpha_Layer == false)
 			{
 				ncolor.a = clamp(ncolor.a * glow_amount, 0.0, 1.0);
 				//temp_color = max(temp_color,ncolor) * glow_color ;//* ((1-ncolor.a) + color * ncolor.a);
@@ -109,8 +109,8 @@ float4 mainImage(VertData v_in) : TARGET
 				// use temp_color as floor, add glow, use highest alpha of blur pixels, then multiply by glow color
 				// max is used to simulate addition of vector texture color
 				temp_color = float4(max(temp_color.rgb, ncolor.rgb * (glow_amount * (b / 2))),  // color effected by glow over time
-					max(temp_color.a, (glow_amount * (b / 2))))  // alpha effected by glow over time
-					* (glitch_color * (b / 2)); // glow color effected by glow over time
+					max(temp_color.a, (glow_amount * (b / 2))))  // alpha affected by glow over time
+					* (glitch_color * (b / 2)); // glow color affected by glow over time
 			}
 		}
 	}

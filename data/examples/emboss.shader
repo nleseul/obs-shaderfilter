@@ -1,5 +1,6 @@
 // Spotlight By Charles Fettinger (https://github.com/Oncorporation)  4/2019
 uniform bool Use_Color;
+uniform bool Apply_To_Alpha_Layer = true;
 
 float4 mainImage(VertData v_in) : TARGET
 {
@@ -8,7 +9,7 @@ float4 mainImage(VertData v_in) : TARGET
 	float dy = 1 / uv_size.y;
 
 	float4 c0 = image.Sample(textureSampler, v_in.uv);
-	if (c0.a > 0.0)
+	if (c0.a > 0.0 || Apply_To_Alpha_Layer == false)
 	{
 		float4 c1 = image.Sample(textureSampler, v_in.uv + float2(-dx, -dy));
 		float4 c2 = image.Sample(textureSampler, v_in.uv + float2(0, -dy));

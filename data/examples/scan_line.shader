@@ -16,10 +16,10 @@ uniform float angle = 45;
 uniform bool shift = true;
 uniform bool boost = true;
 //Increases the minimum value of the sin wave
-uniform float floor;
+uniform float floor = 0.0;
 //final adjustment to the period of the sin wave, we can't / 0, need to be careful w/ user input
-uniform float period;
-uniform string notes = "Do not set period to zero";
+uniform float period = 10.0;
+uniform string notes = "floor affects the minimum opacity of the scan line";
 float4 mainImage(VertData v_in) : TARGET
 {
 	//3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481 							3.141592653589793238462643383279502884197169399375105820974944592307816406286 

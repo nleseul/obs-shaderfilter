@@ -38,24 +38,26 @@ float4 mainImage(VertData v_in) : TARGET
 	float luminance_floor = float(min_brightness) /100;
 	float luminance_ceiling = float(max_brightness) /100;
 
-	//circular easing variable
-	float t = 1 + sin(elapsed_time * speed);
-	float b = 0.0; //start value
-	float c = 2.0; //change value
-	float d = 2.0; //duration
+	if (color.a > 0.0)
+	{
+		//circular easing variable
+		float t = 1 + sin(elapsed_time * speed);
+		float b = 0.0; //start value
+		float c = 2.0; //change value
+		float d = 2.0; //duration
 
-	// simple glow calc
-	for (int n = 0; n < 4; n++){
-		b = BlurStyler(t,0,c,d,ease);
-		float4 ncolor = image.Sample(textureSampler, v_in.uv + (blur_amount * b ) * offsets[n]);
-		float intensity = dot(ncolor * 1 ,float3(0.299,0.587,0.114));
-		if ((intensity >= luminance_floor) && (intensity <= luminance_ceiling))
-		{
-			ncolor.a = clamp(ncolor.a * glow_amount, 0.0, 1.0);
-			color += (ncolor * (glow_amount * b) );
+		// simple glow calc
+		for (int n = 0; n < 4; n++) {
+			b = BlurStyler(t, 0, c, d, ease);
+			float4 ncolor = image.Sample(textureSampler, v_in.uv + (blur_amount * b) * offsets[n]);
+			float intensity = dot(ncolor * 1, float3(0.299, 0.587, 0.114));
+			if ((intensity >= luminance_floor) && (intensity <= luminance_ceiling))
+			{
+				ncolor.a = clamp(ncolor.a * glow_amount, 0.0, 1.0);
+				color += (ncolor * (glow_amount * b));
+			}
 		}
 	}
-
 	return color;
 
 }

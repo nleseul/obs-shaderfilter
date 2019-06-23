@@ -12,6 +12,7 @@ uniform string notes = "5/2 seems reasonable";
 
 uniform int hue_steps = 5;
 uniform int value_steps = 2;
+uniform bool Apply_To_Alpha_Layer = true;
 
 sampler_state textureSampler {
     Filter    = Linear;
@@ -73,13 +74,15 @@ float hue_wrap(float h)
 float4 PassThrough(VertDataOut v_in) : TARGET
 {
     float4 rgba = image.Sample(textureSampler, v_in.uv);
-
-    float3 hsv = rgb2hsv(rgba.rgb);
-    hsv = float3(fit(hsv.x, hue_steps), hsv.y, fit(hsv.z, value_steps));
-    //hsv = float3(hue_wrap(hsv.x + 0.5), 1, hsv.z);
-    return float4(hsv2rgb(hsv), rgba.a);
-
-    //return float4(fit(rgba.r), fit(rgba.g), fit(rgba.b), rgba.a);
+	if (rgba.a > 0.0 || Apply_To_Alpha_Layer == false)
+	{
+		float3 hsv = rgb2hsv(rgba.rgb);
+		hsv = float3(fit(hsv.x, hue_steps), hsv.y, fit(hsv.z, value_steps));
+		//hsv = float3(hue_wrap(hsv.x + 0.5), 1, hsv.z);
+		rgba = float4(hsv2rgb(hsv), rgba.a);
+		//return float4(fit(rgba.r), fit(rgba.g), fit(rgba.b), rgba.a);
+	}
+	return rgba;    
 }
 
 technique Draw

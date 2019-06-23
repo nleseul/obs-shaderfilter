@@ -5,6 +5,7 @@
 
 uniform int speed_percentage = 240; //<Range(-10.0, 10.0)>
 uniform int alpha_percentage = 100;
+uniform bool Apply_To_Alpha_Layer = true;
 uniform string notes = "There are a lot of code items you can play with in the file /* */ delimit";
 
 float4 mainImage(VertData v_in) : TARGET
@@ -18,8 +19,15 @@ float4 mainImage(VertData v_in) : TARGET
 
 	float mx = max(uv_size.x , uv_size.y);
 	//float2 uv = v_in.uv / mx;
-	float3 rgb = float3(v_in.uv.x, v_in.uv.y, 0.10 + 0.85 * sin(elapsed_time * speed) );
-	
+	float3 rgb = background_color.rgb;
+
+	// skip if (alpha is zero and only apply to alpha layer is true) 
+	if (!(background_color.a <= 0.0 && Apply_To_Alpha_Layer == true))
+	{
+		rgb = float3(v_in.uv.x, v_in.uv.y, 0.10 + 0.85 * sin(elapsed_time * speed));
+		if (Apply_To_Alpha_Layer == false)
+			background_color.a = alpha;
+	}
 /*	float dist = distance(v_in.uv, (float2(0.95,0.95) * uv_scale + uv_offset));
 	for (int i = 0; i < no_colors; ++i) {
 		rgb = lerp(rgb, colors[i], dist * 1.5);
