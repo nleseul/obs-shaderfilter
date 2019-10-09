@@ -55,13 +55,12 @@ float4 mainImage(VertData v_in) : TARGET
         col = float4(0,0,0,alpha);    
     } 
 
-    // skip if (alpha is zero and only apply to alpha layer is true) 
-	if (!(background_color.a <= 0.0 && Apply_To_Alpha_Layer == true))
-	{		
-		if (Apply_To_Alpha_Layer == false)
-			background_color.a = alpha;
+    // if not appling to alpha layer, set output alpha
+	if (Apply_To_Alpha_Layer == false)
+		col.a = alpha;
 
-		col = lerp(background_color,col,alpha);
-	}
+    //output color is combined with background image
+	col.rgb = lerp(background_color.rgb,col.rgb,clamp(alpha, 0.0, 1.0));
+
 	return col;
 }
