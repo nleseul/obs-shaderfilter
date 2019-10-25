@@ -17,6 +17,8 @@ uniform float Axis_Z = 1.0;
 uniform float Angle_Degrees = 45.0;
 uniform bool Rotate_Transform = true;
 uniform bool Rotate_Pixels = false;
+uniform int Center_Horizontal_Percent = 0;
+uniform int Center_Vertical_Percent = 0;
 uniform bool Rotate_Colors = false;
 
 uniform string notes = " Choose axis, angle and speed, then rotate away!";
@@ -78,11 +80,18 @@ float4 mainImage(VertData v_in) : TARGET
 	float direction = abs(sin((elapsed_time - 0.001) * speed));	
 	float t = sin(elapsed_time * speed);
 	float angle_degrees = PI180th * Angle_Degrees;
-
+	float2 center_offset = float2(float(Center_Horizontal_Percent) * 0.01, float(Center_Vertical_Percent) * 0.01);
 
 	// use matrix to transform pixels
 	if (Rotate_Pixels)
-		rgba = image.Sample(textureSampler, mul(v_in.uv,rotAxis(float3(Axis_Y,Axis_X,Axis_Z), (angle_degrees * t))).xy);
+	{
+		float2 newCoords = v_in.uv  + center_offset; //move to center
+		float s = sin(angle_degrees * t); //sine
+		float c = cos(angle_degrees * t); //cosine
+		newCoords.x = (v_in.uv.x * c) + (v_in.uv.y * (-s));
+		newCoords.y = (v_in.uv.x * s) + (v_in.uv.y * c);
+		rgba = image.Sample(textureSampler, newCoords - center_offset);
+	}
 
 	if (Rotate_Colors)
 		rgba.rgb = mul(rgba.rgb, rotAxis(float3(Axis_X,Axis_Y,Axis_Z), (angle_degrees * t))).xyz;
