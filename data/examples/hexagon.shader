@@ -34,7 +34,7 @@ float4 mainImage(VertData v_in) : TARGET
 {
 	float4 rgba 		= image.Sample(textureSampler, v_in.uv * uv_scale + uv_offset);
 	float alpha 		= (float)Alpha_Percent * 0.01;	
-	float quantity 		= clamp(sqrt(Quantity), 0.0, 100.0);
+	float quantity 		= sqrt(clamp(Quantity, 0.0, 100.0));
 	float border_width	= clamp(float(Border_Width - 15), -15, 100) * 0.01;
 	float speed 		= (float)Speed_Percent * 0.01;
 	float time 		= (1 + sin(elapsed_time * speed))*0.5;

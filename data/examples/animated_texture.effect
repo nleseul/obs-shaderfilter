@@ -1,0 +1,160 @@
+// Animated Texture By Charles Fettinger (https://github.com/Oncorporation)  3/2020
+// Animates a texture with polar sizing and color options
+// for use with obs-shaderfilter 1.0
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float elapsed_time;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
+uniform float2 uv_pixel_interval;
+uniform float rand_f;
+uniform float2 uv_size;
+uniform string notes;
+
+uniform texture2d Animation_Image;
+uniform texture2d Colorization_Image;
+uniform bool reverse = false;
+uniform bool bounce = false;
+uniform bool center_animation = true;
+uniform bool polar_animation = true;
+uniform float polar_angle = 90.0;
+uniform float polar_height = 1.0;
+uniform float speed_horizontal_percent = 50;
+uniform float speed_vertical_percent = 5;
+uniform float tint_speed_horizontal_percent = 50;
+uniform float tint_speed_vertical_percent = 5;
+uniform float Alpha = 1.0;
+uniform bool Use_Animation_Image_Color = true;
+
+sampler_state textureSampler {
+	Filter    = Linear;
+	AddressU  = Border;
+	AddressV  = Border;
+	BorderColor = 00000000;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+float4 convert_pmalpha(float4 color)
+{
+	float4 ret = color;
+	if (color.a >= 0.001)
+		ret.xyz /= color.a;
+	else
+		ret = float4(0.0, 0.0, 0.0, 0.0);
+	return ret;
+}
+
+float2 time(float2 speed_dir)
+{
+	float PI = 3.1415926535897932384626433832795; //acos(-1);
+
+	float2 t = (elapsed_time * speed_dir) ;
+	if (bounce) 
+	{
+		// coordinates moved from -1.0 to 1.0 to 0.0 to 2.0 then modified to fit screen
+		t.x = sin(elapsed_time * speed_dir.x * PI * 0.6667) + 1.0;
+		t.y = cos(elapsed_time * speed_dir.y * PI) + 1.0;
+		t *= -0.5;
+	}
+
+	if (reverse)
+		t = t * -1;
+	return t;
+}
+
+VertData mainTransform(VertData v_in)
+{
+	float2 speed_dir = float2(speed_horizontal_percent * 0.01, speed_vertical_percent * 0.01);	
+
+	VertData vert_out;
+	//float2 direction = abs(sin((elapsed_time - 0.001) * speed_dir));	
+
+	float2 offset = uv_offset;
+
+	if (center_animation)
+	{
+		vert_out.uv = v_in.uv - 0.5f;
+	} 
+	else 
+	{	
+		offset += time(speed_dir);
+		vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+		vert_out.uv  = v_in.uv * uv_scale + offset;
+	}
+
+	return vert_out;
+}
+
+
+float4 mainImage(VertData v_in) : TARGET
+{
+	float PI = 3.1415926535897932384626433832795; //acos(-1);
+	float PI180th = 0.0174532925; //PI divided by 180
+
+	float2 speed_dir = float2(speed_horizontal_percent * 0.01, speed_vertical_percent * 0.01);
+	float2 tint_speed_dir = float2(tint_speed_horizontal_percent * 0.01, tint_speed_vertical_percent * 0.01);
+
+	//compensate for background vertex shader values
+	float2 background_offset = -.5f;
+	if (!center_animation)
+		background_offset = time(speed_dir);
+	float4 rgba =  image.Sample(textureSampler, v_in.uv - background_offset); //float4(0.0,0.0,0.0,0.01);
+
+	// Convert our texture coordinates to polar form:
+	if (polar_animation) {
+	
+	    float2 polar = float2(
+	           atan2(v_in.uv.y, v_in.uv.x) / (polar_angle * PI180th * 4), // angle
+	           log(dot(v_in.uv, v_in.uv)) * -1 * (polar_height * PI180th * PI) // log-radius
+	        );
+
+	    // Check how much our texture sampling point changes between
+	    // neighbouring pixels to the sides (ddx) and above/below (ddy)
+	    ///float4 gradient = float4(ddx(polar), ddy(polar));
+
+	    // If our angle wraps around between adjacent samples,
+	    // discard one full rotation from its value and keep the fraction.
+	    ///gradient.xz = frac(gradient.xz + 1.5f) - 0.5f;
+
+	    float2 tintUVs = polar * 4;
+	    tintUVs += time(tint_speed_dir);
+
+	    // Apply texture scale
+    	polar *= 4; 
+    	// Scroll the texture over time.
+    	polar += time(speed_dir);
+    	float4 animation = Animation_Image.Sample(textureSampler, frac(polar));
+    	
+
+    	float keyAmount = distance(animation.rgb,float3(0.0,0.0,0.0));
+    	float intensity = dot(animation.rgb ,float3(0.299,0.587,0.114));
+    	//animation.a = clamp((intensity),0.0,1.0);
+    	if (Use_Animation_Image_Color)
+    	{
+    		animation.rgb *= Colorization_Image.Sample(textureSampler, frac(tintUVs)).rgb;
+    	}
+    	else
+    	{
+    		animation.rgb =  Colorization_Image.Sample(textureSampler, frac(tintUVs)).rgb;
+    	}
+    	//if (keyAmount > 0.5f)     		
+    		rgba = lerp(rgba, animation, animation.a * Alpha);
+	}
+
+	return rgba;
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = mainTransform(v_in);
+		pixel_shader  = mainImage(v_in);
+	}
+}
