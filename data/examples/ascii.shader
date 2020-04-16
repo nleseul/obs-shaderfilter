@@ -1,6 +1,11 @@
 // Based on the following shaders:
-// https://www.shadertoy.com/view/3dtXD8
-// https://www.shadertoy.com/view/lssGDj
+// https://www.shadertoy.com/view/3dtXD8 - Created by DSWebber in 2019-10-24
+// https://www.shadertoy.com/view/lssGDj - Created by movAX13h in 2013-09-22
+
+// Modifications of original shaders include:
+//  - Porting from GLSL to HLSL
+//  - Combining characters sets from both source shaders
+//  - Adding support for parameters from OBS for monochrome rendering, scaling and dynamic character set
 
 uniform int        scale = 1; // Size of characters
 uniform float4     base_color = {0.0,1.0,0.0,1.0}; // Monochrome base color
