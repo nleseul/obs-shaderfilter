@@ -62,8 +62,8 @@ float4 mainImage(VertData v_in) : TARGET
 
 	float4 result = color;
 	if (result.a > 0) {
-		result.rgb		= modAcceptance * color.rgb + (1.0 - modAcceptance) * gray.rgb;
-		result.a 		*= gray.a;
+		result.rgb		= modAcceptance * color + (1.0 - modAcceptance) * gray;
+		//result.a 		*= gray.a;
 	}
 
 	return result;
