@@ -67,9 +67,9 @@ float4 mainImage( VertData v_in ) : TARGET
 	
 	if (monochrome)
 	{
-		color = base_color;
+		color.rgb = base_color.rgb;
 	}
     color = color*character(n, p);
     
-    return float4(color.rgb,1.0);
+    return color.rgb;
 }
