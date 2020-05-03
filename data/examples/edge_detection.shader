@@ -63,10 +63,11 @@ float4 mainImage(VertData v_in) : TARGET
 
 	if(alpha_channel){
 		if (edge_multiply && isEdge) {
-			return float4(col.r,col.g,col.b,clamp(dot(color,lum )* alpha_level,0.0,1.0));
-		} else {
+			return clamp(lerp(color, col, alpha_level), 0.0, 1.0);
+		}
+		else {
 			// use max instead of multiply
-			return float4(max(color.r, col.r),max(color.g,col.g),max(color.b, col.b),clamp(dot(color,lum ) * alpha_level,0.0,1.0));
+			return clamp(lerp(color, float4(max(color.r, col.r), max(color.g, col.g), max(color.b, col.b), 1.0), alpha_level), 0.0, 1.0);
 		}
 	} else {
 		// col.a = col.a * alpha_level;
