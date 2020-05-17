@@ -21,12 +21,12 @@ find_path(OBS_LIB_DIR
 		${OBSSourcePath}/../build/x86-Debug/libobs/		
 		${OBSSourcePath}/../build/${_lib_suffix}-Release/libobs/		
 		${OBSSourcePath}/../build/x86-Release/libobs/
-		#C:/Users/CharlesFettinger/CMakeBuilds/6fd9c833-c666-9735-93d7-33bcfdef5371/build/x64-${CMAKE_BUILD_TYPE}/libobs/
+		#C:/Users/CharlesFettinger/537afd1c-7a5a-4ef8-ae77-de709ac9c097/build/x64-${CMAKE_BUILD_TYPE}/libobs/
     PATHS
 		/usr/lib /usr/local/lib /opt/local/lib /sw/lib)
 
 if(!OBS_LIB_DIR)        
-	set(OBS_LIB_DIR "C:/Users/CharlesFettinger/CMakeBuilds/6fd9c833-c666-9735-93d7-33bcfdef5371/build/x64-${CMAKE_BUILD_TYPE}/libobs" CACHE PATH "Path to OBS lib.dll")
+	set(OBS_LIB_DIR "C:/Users/CharlesFettinger/CMakeBuilds/537afd1c-7a5a-4ef8-ae77-de709ac9c097/build/x64-${CMAKE_BUILD_TYPE}/libobs" CACHE PATH "Path to OBS lib.dll")
 endif()
 # Source
 file (GLOB SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)

@@ -1,4 +1,4 @@
-// Version 1.1 by Charles Fettinger https://github.com/Oncorporation/obs-shaderfilter
+// Version 1.11 by Charles Fettinger https://github.com/Oncorporation/obs-shaderfilter
 // original version by nleseul https://github.com/nleseul/obs-shaderfilter
 #include <obs-module.h>
 #include <graphics/graphics.h>
@@ -12,6 +12,10 @@
 #include <float.h>
 #include <limits.h>
 #include <stdio.h>
+
+#include <util/threading.h>	   
+
+/* clang-format off */
 
 #define nullptr ((void*)0)
 
@@ -68,6 +72,8 @@ technique Draw\
 	}\
 }";
 
+/* clang-format on */
+
 struct effect_param_data
 {
 	struct dstr name;
@@ -93,6 +99,10 @@ struct shader_filter_data
 	struct dstr last_path;
 	bool last_from_file;
 
+	uint64_t shader_last_time;
+	float shader_start_time;
+	uint64_t shader_duration;
+
 	gs_eparam_t *param_uv_offset;
 	gs_eparam_t *param_uv_scale;
 	gs_eparam_t *param_uv_pixel_interval;
@@ -107,7 +117,10 @@ struct shader_filter_data
 
 	int total_width;
 	int total_height;
-	//bool use_sliders;
+	bool use_sliders;
+	bool use_sources;  //consider using name instead, "source_name" or use annotation
+	bool use_shader_elapsed_time;
+	bool no_repeat;
 
 	struct vec2 uv_offset;
 	struct vec2 uv_scale;
@@ -126,6 +139,7 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	obs_data_t *settings = obs_source_get_settings(filter->context);
 
 	// First, clean up the old effect and all references to it. 
+	filter->shader_start_time = 0.0;
 	size_t param_count = filter->stored_param_list.num;
 	for (size_t param_index = 0; param_index < param_count; param_index++)
 	{
@@ -182,7 +196,9 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	size_t effect_buffer_total_size = effect_header_length + effect_body_length + effect_footer_length;
 
 	bool use_template = !obs_data_get_bool(settings, "override_entire_effect");
-	//bool use_sliders = obs_data_get_bool(settings, "use_sliders");
+	bool use_sliders = !obs_data_get_bool(settings, "use_sliders");
+	bool use_sources = !obs_data_get_bool(settings, "use_sources");
+	bool use_shader_elapsed_time = !obs_data_get_bool(settings, "use_shader_elapsed_time");
 
 	struct dstr effect_text = { 0 };
 
@@ -214,6 +230,7 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 
 	// Store references to the new effect's parameters. 
 	da_init(filter->stored_param_list);
+
 	size_t effect_count = gs_effect_get_num_params(filter->effect);
 	for (size_t effect_index = 0; effect_index < effect_count; effect_index++)
 	{
@@ -330,20 +347,34 @@ static bool shader_filter_file_name_changed(obs_properties_t *props,
 	return false;
 }
 
-//static bool use_sliders_changed(obs_properties_t *props,
-//	obs_property_t *p, obs_data_t *settings) {
-//	struct shader_filter_data *filter = obs_properties_get_param(props);
-//
-//	bool use_sliders = obs_data_get_bool(settings, "use_sliders");
-//	if (use_sliders != filter->use_sliders)
-//	{
-//		filter->reload_effect = true;
-//	}
-//	filter->use_sliders = use_sliders;
-//
-//	return false;
-//}
+static bool use_sliders_changed(obs_properties_t *props,
+	obs_property_t *p, obs_data_t *settings) {
+	struct shader_filter_data *filter = obs_properties_get_param(props);
 
+	bool use_sliders = obs_data_get_bool(settings, "use_sliders");
+	if (use_sliders != filter->use_sliders)
+	{
+		filter->reload_effect = true;
+	}
+	filter->use_sliders = use_sliders;
+
+	return false;
+}
+
+static bool use_shader_elapsed_time_changed(obs_properties_t *props, obs_property_t *p,
+	obs_data_t *settings)
+{
+	struct shader_filter_data *filter = obs_properties_get_param(props);
+
+	bool use_shader_elapsed_time =
+		obs_data_get_bool(settings, "use_shader_elapsed_time");
+	if (use_shader_elapsed_time != filter->use_shader_elapsed_time) {
+		filter->reload_effect = true;
+	}
+	filter->use_shader_elapsed_time = use_shader_elapsed_time;
+
+	return false;
+}
 static bool shader_filter_reload_effect_clicked(obs_properties_t *props, obs_property_t *property, void *data)
 {
 	struct shader_filter_data *filter = data;
@@ -362,13 +393,13 @@ static obs_properties_t *shader_filter_properties(void *data)
 {
 	struct shader_filter_data *filter = data;
 
+
 	struct dstr examples_path = { 0 };
 	dstr_init(&examples_path);
 	dstr_cat(&examples_path, obs_get_module_data_path(obs_current_module()));
 	dstr_cat(&examples_path, "/examples");
 
 	obs_properties_t *props = obs_properties_create();
-
 	obs_properties_set_param(props, filter, NULL);
 
 	obs_properties_add_int(props, "expand_left",
@@ -395,9 +426,16 @@ static obs_properties_t *shader_filter_properties(void *data)
 		NULL, examples_path.array);
 	obs_property_set_modified_callback(file_name, shader_filter_file_name_changed);
 
-	//obs_property_t *use_sliders = obs_properties_add_bool(props, "use_sliders",
-	//	obs_module_text("ShaderFilter.UseSliders"));
-	//obs_property_set_modified_callback(use_sliders, use_sliders_changed);
+	obs_property_t* use_sliders = obs_properties_add_bool(props, "use_sliders",
+		obs_module_text("ShaderFilter.UseSliders"));
+	obs_property_set_modified_callback(use_sliders, use_sliders_changed);
+
+
+	obs_property_t* use_shader_elapsed_time = obs_properties_add_bool(
+		props, "use_shader_elapsed_time",
+		obs_module_text("ShaderFilter.UseShaderElapsedTime"));
+	obs_property_set_modified_callback(use_shader_elapsed_time,
+		use_shader_elapsed_time_changed);
 
 	obs_properties_add_button(props, "reload_effect", obs_module_text("ShaderFilter.ReloadEffect"),
 		shader_filter_reload_effect_clicked);
@@ -406,6 +444,7 @@ static obs_properties_t *shader_filter_properties(void *data)
 	for (size_t param_index = 0; param_index < param_count; param_index++)
 	{
 		struct effect_param_data *param = (filter->stored_param_list.array + param_index);
+		gs_eparam_t* annot = gs_param_get_annotation_by_idx(param, param_index);
 		const char *param_name = param->name.array;
 		struct dstr display_name = {0};
 		dstr_ncat(&display_name, param_name, param->name.len);
@@ -417,10 +456,25 @@ static obs_properties_t *shader_filter_properties(void *data)
 			obs_properties_add_bool(props, param_name, display_name.array);
 			break;
 		case GS_SHADER_PARAM_FLOAT:
-			obs_properties_add_float(props, param_name, display_name.array, -FLT_MAX, FLT_MAX, 0.01);
+			obs_properties_remove_by_name(props, param_name);
+			if (!filter->use_sliders) {
+
+				obs_properties_add_float(props, param_name, display_name.array, -FLT_MAX, FLT_MAX, 0.01);
+			}
+			else
+			{
+				obs_properties_add_float_slider(props, param_name, display_name.array, -1000.0, 1000, 0.01);
+			}
 			break;
 		case GS_SHADER_PARAM_INT:
-			obs_properties_add_int(props, param_name, display_name.array, INT_MIN, INT_MAX, 1);
+			obs_properties_remove_by_name(props, param_name);
+			if (!filter->use_sliders) {
+				obs_properties_add_int(props, param_name, display_name.array, INT_MIN, INT_MAX, 1);
+			}
+			else
+			{
+				obs_properties_add_int_slider(props, param_name, display_name.array, -1000, 1000, 1);
+			}
 			break;
 		case GS_SHADER_PARAM_INT3:
 			
@@ -439,7 +493,7 @@ static obs_properties_t *shader_filter_properties(void *data)
 	}
 
 	dstr_free(&examples_path);	
-
+	UNUSED_PARAMETER(data);
 	return props;
 }
 
@@ -453,7 +507,9 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 	filter->expand_right = (int)obs_data_get_int(settings, "expand_right");
 	filter->expand_top = (int)obs_data_get_int(settings, "expand_top");
 	filter->expand_bottom = (int)obs_data_get_int(settings, "expand_bottom");
-	//filter->use_sliders = (bool)obs_data_get_bool(settings, "use_sliders");
+	filter->use_sliders = (bool)obs_data_get_bool(settings, "use_sliders");
+	filter->use_sources = (bool)obs_data_get_bool(settings, "use_sources");
+	filter->use_shader_elapsed_time = (bool)obs_data_get_bool(settings, "use_shader_elapsed_time");
 
 	if (filter->reload_effect)
 	{
@@ -466,7 +522,12 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 	for (size_t param_index = 0; param_index < param_count; param_index++)
 	{
 		struct effect_param_data *param = (filter->stored_param_list.array + param_index);
-		const char *param_name = param->name.array;
+		gs_eparam_t* annot = gs_param_get_annotation_by_idx(param, param_index);
+		const char* param_name = param->name.array;
+		struct dstr display_name = { 0 };
+		dstr_ncat(&display_name, param_name, param->name.len);
+		dstr_replace(&display_name, "_", " ");
+		bool is_source = false;
 
 		switch (param->type)
 		{
@@ -571,6 +632,9 @@ static void shader_filter_tick(void *data, float seconds)
 	filter->uv_pixel_interval.x = 1.0f / base_width;
 	filter->uv_pixel_interval.y = 1.0f / base_height;
 
+	if (filter->shader_start_time == 0) {
+		filter->shader_start_time = filter->elapsed_time + seconds;
+	}
 	filter->elapsed_time += seconds;
 
 	// undecided between this and "rand_float(1);" 
@@ -606,7 +670,16 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 		}
 		if (filter->param_elapsed_time != NULL)
 		{
-			gs_effect_set_float(filter->param_elapsed_time, filter->elapsed_time);
+			if (filter->use_shader_elapsed_time) {
+				gs_effect_set_float(
+					filter->param_elapsed_time,
+					filter->elapsed_time -
+					filter->shader_start_time);
+			}
+			else {
+				gs_effect_set_float(filter->param_elapsed_time,
+					filter->elapsed_time);
+			}
 		}
 		if (filter->param_rand_f != NULL)
 		{

@@ -13,6 +13,7 @@ uniform string notes = "Opacity between 10 and 20 works. Adjust `Color` from whi
 uniform texture2d target;
 uniform float4 color;
 uniform float opacity = 15.0;
+uniform bool invert;
 uniform bool Convert_709to601;
 uniform bool Convert_601to709;
 
@@ -67,7 +68,9 @@ float4 PSColorMaskRGBA(VertDataOut v_in) : TARGET
 	float4 rgba = image.Sample(textureSampler, v_in.uv);
 
 	float4 targetRGB = target.Sample(textureSampler, v_in.uv2) * color;
-
+	if (invert){
+		targetRGB.rgb = 1.0 - targetRGB.rgb;
+	}
 	if (Convert_709to601)
 	{
 		rgba.rgb = Convert709to601(rgba);
