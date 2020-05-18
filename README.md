@@ -1,4 +1,4 @@
-# obs-shaderfilter 1.0
+# obs-shaderfilter 1.11
 
 ## Introduction
 
@@ -87,6 +87,10 @@ handle these variables being missing, but the shader may malfunction.)
 * **`uv_pixel_interval`** (`float2`)&mdash;This is the size in UV coordinates of an individual texel. You can use
   this to convert the UV coordinates of the pixel being processed to the coordinates of that texel in the source
   texture, or otherwise scale UV coordinate distances into texel distances.
+
+### New Options in version 1.1+
+* *Use Slider Inputs&mdash; Converts Integer and floating point inputs into sliders in the UI.
+* *Use Shader Time&mdash;Start the effect from the loadtime of the shader, not the start up time of OBS Studio.
   
 ### Example shaders
 
@@ -95,8 +99,9 @@ useful common tasks, or used as a reference in developing your own shaders. Note
 extensions are for clarity only, and have no specific meaning to the plugin. Text files with any extension can be
 loaded. 
 
-I recommend *.shader* do not require `override_entire_effect` as pixel shaders, while *.effect* signifies vertex shaders with `override_entire_effect` required.
+I recommend *.shader* as they do not require `override_entire_effect` as pixel shaders, while *.effect* signifies vertex shaders with `override_entire_effect` required.
 
+* *animated_texture.effect*&mdash; Animates a texture with polar sizing and color options
 * *background_removal.effect*&mdash; simple implementation of background removal. Optional color space corrections
 * *blink.shader*&mdash;A shader that fades the opacity of the output in and out over time, with a configurable speed
   multiplier. Demonstrates the user of the `elapsed_time` parameter.
@@ -130,6 +135,8 @@ I recommend *.shader* do not require `override_entire_effect` as pixel shaders, 
   does not increase with its size, so you should be able to make your blur size as large as you like wtihout affecting
   GPU load. 
 * *repeat.effect* (Overrides entire effect)&mdash;Duplicates the input video as many times as you like and organizes on the screen.
+* *rgb_color_wheel.shader&mdash;A rotatable RGB color wheel!
+* *rotatoe.effect* (Overrides entire effect)&mdash;A test rotation effect
 * *rounded_rect.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded 
   edges.
 * *scan_line.shader*&mdash;An effect that creates old style tv scan lines, for glitch style effects. 
