@@ -71,5 +71,5 @@ float4 mainImage( VertData v_in ) : TARGET
 	}
     color = color*character(n, p);
     
-    return color.rgb;
+    return color;
 }
