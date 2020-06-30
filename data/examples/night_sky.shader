@@ -1,6 +1,6 @@
-// Night Sky shader by Charles Fettinger for obs-shaderfilter plugin 5/2020
+// Night Sky shader by Charles Fettinger for obs-shaderfilter plugin 6/2020
 // https://github.com/Oncorporation/obs-shaderfilter
-//https://www.shadertoy.com/view/3tfXRM Simple Night Sky - coverted from
+//https://www.shadertoy.com/view/3tfXRM Simple Night Sky - coverted from and updated
 
 uniform float4x4 ViewProj;
 uniform texture2d image;
@@ -27,6 +27,7 @@ uniform int number_stars = 25; //<Range(0.0,100.0)>
 uniform float4 SKY_COLOR = { 0.027, 0.151, 0.354, 1.0 };
 uniform float4 STAR_COLOR = { 0.92, 0.92, 0.14, 1.0 };
 uniform float4 LIGHT_SKY = { 0.45, 0.61, 0.98, 1.0 };
+uniform float SKY_LIGHTNESS = .6;
 
  // Moon
 uniform float4 MOON_COLOR = { 0.81, 0.81, 0.81, 1.0 };
@@ -185,9 +186,9 @@ float4 mainImage(VertData v_in) : TARGET
         
     //float3 col = float3(0.0);
     //float m = valueNoise21(uv);    
-	float3 col = lerp(LIGHT_SKY.rgb, SKY_COLOR.rgb, ouv.y+.6);
+	float3 col = lerp(SKY_COLOR.rgb, LIGHT_SKY.rgb, ouv.y-SKY_LIGHTNESS);
     
-    col *= .65 + (1.-ouv.y);
+    col *= SKY_LIGHTNESS - (1.-ouv.y);
     
     //Add clouds
     if (Include_Clouds)
