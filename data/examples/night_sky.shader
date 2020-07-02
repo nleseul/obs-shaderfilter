@@ -1,4 +1,4 @@
-// Night Sky shader by Charles Fettinger for obs-shaderfilter plugin 6/2020
+// Night Sky shader by Charles Fettinger for obs-shaderfilter plugin 6/2020 v.51
 // https://github.com/Oncorporation/obs-shaderfilter
 //https://www.shadertoy.com/view/3tfXRM Simple Night Sky - coverted from and updated
 
@@ -19,22 +19,22 @@ uniform bool Include_Clouds = true;
 uniform bool Include_Moon = true;
 uniform int center_width_percentage = 50;
 uniform int center_height_percentage = 50;
-uniform float Alpha_Percentage = 80; //<Range(0.0,100.0)>
-uniform bool Apply_To_Image = true;
+uniform float Alpha_Percentage = 95; //<Range(0.0,100.0)>
+uniform bool Apply_To_Image = false;
 uniform bool Replace_Image_Color = false;
-uniform int number_stars = 25; //<Range(0.0,100.0)>
+uniform int number_stars = 20; //<Range(0.0,100.0)>
 
 uniform float4 SKY_COLOR = { 0.027, 0.151, 0.354, 1.0 };
 uniform float4 STAR_COLOR = { 0.92, 0.92, 0.14, 1.0 };
 uniform float4 LIGHT_SKY = { 0.45, 0.61, 0.98, 1.0 };
-uniform float SKY_LIGHTNESS = .6;
+uniform float SKY_LIGHTNESS = .3;
 
  // Moon
-uniform float4 MOON_COLOR = { 0.81, 0.81, 0.81, 1.0 };
-uniform float moon_size = 0.15;
-uniform float moon_bump_size = 0.12;
-uniform float Moon_Position_x = -0.600;
-uniform float Moon_Position_y = -0.25;
+uniform float4 MOON_COLOR = { .4, .25, 0.25, 1.0 };
+uniform float moon_size = 0.18;
+uniform float moon_bump_size = 0.14;
+uniform float Moon_Position_x = -0.6;
+uniform float Moon_Position_y = -0.3;
 
 #define PI 3.1416
 //#define SKY_COLOR float3(0.027, 0.151, 0.354)
@@ -155,12 +155,12 @@ float blink(float time, float timeInterval) {
     }
 }
 
-float3 sampleBumps(float2 p, float2 uv, float radius) {
+float3 sampleBumps(float2 p, float2 uv, float radius, float spin) {
 	float dist = distance(p, uv);
 	float3 BumpSamples =  float3(0.,0.,0.);
     
     if (dist < radius) {
-    	float bumps =  (1.-valueNoise21(uv*10.))*.1;
+    	float bumps =  (1.-valueNoise21(uv*spin))*.1;
     	BumpSamples = float3(bumps, bumps, bumps);
     }
     return  BumpSamples;
@@ -210,7 +210,7 @@ float4 mainImage(VertData v_in) : TARGET
     	moonPosition = float2(Moon_Position_x, Moon_Position_y);
 	    col += points(moonPosition, uv, MOON_COLOR.rgb,moon_size, 0.3);
 	    // Moon bumps
-	    col += sampleBumps(moonPosition, uv, moon_bump_size);
+	    col += sampleBumps(moonPosition, uv, moon_bump_size, 9. + fmod(time*.1,9));
     }
 
     for (float i = 0.; i < clamp(number_stars,0,100); i++) {
