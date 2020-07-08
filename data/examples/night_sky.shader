@@ -1,4 +1,4 @@
-// Night Sky shader by Charles Fettinger for obs-shaderfilter plugin 6/2020 v.51
+// Night Sky shader by Charles Fettinger for obs-shaderfilter plugin 6/2020 v.6
 // https://github.com/Oncorporation/obs-shaderfilter
 //https://www.shadertoy.com/view/3tfXRM Simple Night Sky - coverted from and updated
 
@@ -234,10 +234,10 @@ float4 mainImage(VertData v_in) : TARGET
 	{
 		float4 color = image.Sample(textureSampler, v_in.uv);
 		float4 original_color = color;
-		float4 luma = dot(color,float4(0.30, 0.59, 0.11, 1.0));
+		float4 luma = dot(color.rgb,float3(0.299,0.587,0.114));
 		if (Replace_Image_Color)
 			color = luma;
-		rgba = lerp(original_color, rgba * color,clamp(Alpha_Percentage *.01 ,0,1.0));
+		rgba = lerp(original_color, rgba * color,alpha);
 		
 	}
 	return rgba;
