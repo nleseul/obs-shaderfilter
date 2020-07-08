@@ -121,7 +121,7 @@ struct shader_filter_data
 	bool use_sources;  //consider using name instead, "source_name" or use annotation
 	bool use_shader_elapsed_time;
 	bool no_repeat;
-
+	
 	struct vec2 uv_offset;
 	struct vec2 uv_scale;
 	struct vec2 uv_pixel_interval;
