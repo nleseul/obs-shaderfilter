@@ -57,7 +57,7 @@ uniform float lumaMin = 0.01;
 uniform float lumaMinSmooth = 0.01;
 uniform float Ratio = 4.0;
 uniform float Alpha_Percentage = 100; //<Range(0.0,100.0)>
-uniform bool Apply_To_Image = false;
+uniform bool Apply_To_Alpha_Layer = true;
 
 #define PI2 6.28318530718
 #define PI 3.1416
@@ -97,43 +97,52 @@ float vorocloud(float2 p){
 
 vec4 scene(float2 UV){
 	float alpha = clamp(Alpha_Percentage *.01 ,0,1.0);
-    float x = UV.x;
-    float y = UV.y;
+
+	float x = UV.x;
+	float y = UV.y;
     
-    float2 p = float2(x, y) - 0.5;
+	float2 p = float2(x, y) - 0.5;
     
-    vec4 col = vec4(0.0,0.0,0.0,0.0);
+	vec4 col = vec4(0.0,0.0,0.0,0.0);
 	col.g += 0.02;
     
-    float v = vorocloud(p);
-    v = 0.2 * floor(v * 5.0);
+	float v = vorocloud(p);
+	v = 0.2 * floor(v * 5.0);
     
-    col.r += 0.1 * v;
-    col.g += 0.6 * v;
-    col.b += 0.5 * pow(v, 5.0);
+	col.r += 0.1 * v;
+	col.g += 0.6 * v;
+	col.b += 0.5 * pow(v, 5.0);
     
     
-    v = vorocloud(p * 2.0);
-    v = 0.2 * floor(v * 5.0);
+	v = vorocloud(p * 2.0);
+	v = 0.2 * floor(v * 5.0);
     
-    col.r += 0.1 * v;
-    col.g += 0.2 * v;
-    col.b += 0.01 * pow(v, 5.0);
+	col.r += 0.1 * v;
+	col.g += 0.2 * v;
+	col.b += 0.01 * pow(v, 5.0);
     
-    col.a = 1.0;
-    float luma = dot(col.rgb,float3(0.299,0.587,0.114));
-    float luma_min = smoothstep(lumaMin, lumaMin + lumaMinSmooth, luma);
-    col.a = clamp(luma_min,0.0,1.0);
-    
-    if (Apply_To_Image)
+	col.a = 1.0;
+	float luma = dot(col.rgb,float3(0.299,0.587,0.114));
+	float luma_min = smoothstep(lumaMin, lumaMin + lumaMinSmooth, luma);
+	col.a = clamp(luma_min,0.0,1.0);
+
+	float4 original_color = image.Sample(textureSampler, UV);
+	
+	// skip if (alpha is zero and only apply to alpha layer is true) 
+	if (!(original_color.a <= 0.0 && Apply_To_Alpha_Layer == true))
 	{
-		float4 original_color = image.Sample(textureSampler, UV);
-		col.rgb = lerp(original_color.rgb, col.rgb,alpha);	
-		col = lerp(original_color, col,col.a);
+		if (Apply_To_Alpha_Layer == false)
+			original_color.a = alpha;
 		
+		col.rgb = lerp(original_color.rgb, col.rgb, alpha); //apply alpha slider
+		col = lerp(original_color, col, col.a); //remove black background color
+	}
+	else
+	{
+		col.a = original_color.a;
 	}
 
-    return col;
+	return col;
 }
 
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
