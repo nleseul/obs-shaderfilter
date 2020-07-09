@@ -12,6 +12,7 @@
 #include <float.h>
 #include <limits.h>
 #include <stdio.h>
+#include <time.h>
 
 #include <util/threading.h>	   
 
@@ -24,12 +25,16 @@ static const char *effect_template_begin =
 uniform float4x4 ViewProj;\
 uniform texture2d image;\
 \
-uniform float elapsed_time;\
 uniform float2 uv_offset;\
 uniform float2 uv_scale;\
 uniform float2 uv_pixel_interval;\
-uniform float rand_f;\
 uniform float2 uv_size;\
+uniform float rand_f;\
+uniform float rand_instance_f;\
+uniform float rand_activation_f;\
+uniform float elapsed_time;\
+uniform int loops;\
+uniform float local_time;\
 \
 sampler_state textureSampler{\
 	Filter = Linear;\
@@ -99,16 +104,20 @@ struct shader_filter_data
 	struct dstr last_path;
 	bool last_from_file;
 
-	uint64_t shader_last_time;
+	//uint64_t shader_last_time;
 	float shader_start_time;
-	uint64_t shader_duration;
+	//uint64_t shader_duration;
 
 	gs_eparam_t *param_uv_offset;
 	gs_eparam_t *param_uv_scale;
 	gs_eparam_t *param_uv_pixel_interval;
-	gs_eparam_t *param_elapsed_time;
+	gs_eparam_t* param_uv_size;
+	gs_eparam_t *param_elapsed_time;	
+	gs_eparam_t* param_loops;
+	gs_eparam_t* param_local_time;
 	gs_eparam_t *param_rand_f;
-	gs_eparam_t *param_uv_size;	
+	gs_eparam_t* param_rand_instance_f;
+	gs_eparam_t* param_rand_activation_f;  	
 
 	int expand_left;
 	int expand_right;
@@ -126,8 +135,13 @@ struct shader_filter_data
 	struct vec2 uv_scale;
 	struct vec2 uv_pixel_interval;
 	struct vec2 uv_size;
-	float elapsed_time;
+	float elapsed_time;	 	
+	float elapsed_time_loop;
+	int   loops;
+	float local_time;
 	float rand_f;
+	float rand_instance_f;
+	float rand_activation_f;
 
 	DARRAY(struct effect_param_data) stored_param_list;
 };
@@ -161,8 +175,10 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	filter->param_uv_offset = NULL;
 	filter->param_uv_pixel_interval = NULL;
 	filter->param_uv_scale = NULL;
-	filter->param_rand_f = NULL;
 	filter->param_uv_size = NULL;
+	filter->param_rand_f = NULL;	
+	filter->param_rand_activation_f = NULL;
+	filter->param_loops = NULL;	
 
 	if (filter->effect != NULL)
 	{
@@ -252,6 +268,10 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 		{
 			filter->param_uv_pixel_interval = param;
 		}
+		else if (strcmp(info.name, "uv_size") == 0)
+		{
+			filter->param_uv_size = param;
+		}
 		else if (strcmp(info.name, "elapsed_time") == 0)
 		{
 			filter->param_elapsed_time = param;
@@ -260,9 +280,13 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 		{
 			filter->param_rand_f = param;
 		}
-		else if (strcmp(info.name, "uv_size") == 0)
+		else if (strcmp(info.name, "rand_activation_f") == 0)
 		{
-			filter->param_uv_size = param;
+			filter->param_rand_activation_f = param;
+		}
+		else if (strcmp(info.name, "loops") == 0)
+		{
+			filter->param_loops = param;
 		}
 		else if (strcmp(info.name, "ViewProj") == 0 || strcmp(info.name, "image") == 0)
 		{
@@ -295,7 +319,10 @@ static void *shader_filter_create(obs_data_t *settings, obs_source_t *source)
 	dstr_init(&filter->last_path);
 	dstr_copy(&filter->last_path, obs_data_get_string(settings, "shader_file_name"));
 	filter->last_from_file = obs_data_get_bool(settings, "from_file");
-	//filter->use_sliders = obs_data_get_bool(settings, "use_sliders");
+	filter->use_sliders = obs_data_get_bool(settings, "use_sliders");
+	filter->rand_instance_f = (float)((double)rand_interval(0, 10000) / (double)10000);
+	filter->rand_activation_f = (float)((double)rand_interval(0, 10000) / (double)10000);
+
 	da_init(filter->stored_param_list);
 
 	obs_source_update(source, settings);
@@ -510,6 +537,7 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 	filter->use_sliders = (bool)obs_data_get_bool(settings, "use_sliders");
 	filter->use_sources = (bool)obs_data_get_bool(settings, "use_sources");
 	filter->use_shader_elapsed_time = (bool)obs_data_get_bool(settings, "use_shader_elapsed_time");
+	filter->rand_activation_f = (float)((double)rand_interval(0, 10000) / (double)10000);
 
 	if (filter->reload_effect)
 	{
@@ -636,6 +664,16 @@ static void shader_filter_tick(void *data, float seconds)
 		filter->shader_start_time = filter->elapsed_time + seconds;
 	}
 	filter->elapsed_time += seconds;
+	filter->elapsed_time_loop += filter->elapsed_time;
+	if (filter->elapsed_time_loop > 1.) {
+		filter->elapsed_time_loop -= 1.;
+
+		// Loops
+		filter->loops += 1;
+		if (filter->loops >= 4194304)
+			filter->loops = -filter->loops;
+	}
+	filter->local_time = (float)os_gettime_ns();
 
 	// undecided between this and "rand_float(1);" 
 	filter->rand_f = (float)((double)rand_interval(0, 10000) / (double)10000); 
@@ -655,7 +693,6 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 		{
 			return;
 		}
-
 		if (filter->param_uv_scale != NULL)
 		{
 			gs_effect_set_vec2(filter->param_uv_scale, &filter->uv_scale);
@@ -677,13 +714,28 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 					filter->shader_start_time);
 			}
 			else {
-				gs_effect_set_float(filter->param_elapsed_time,
-					filter->elapsed_time);
+				gs_effect_set_float(filter->param_elapsed_time, filter->elapsed_time);
 			}
+		}
+		if (filter->param_local_time != NULL)
+		{
+			gs_effect_set_float(filter->param_local_time, filter->local_time);
+		}
+		if (filter->param_loops != NULL)
+		{
+			gs_effect_set_int(filter->param_loops, filter->loops);
 		}
 		if (filter->param_rand_f != NULL)
 		{
 			gs_effect_set_float(filter->param_rand_f, filter->rand_f);
+		}
+		if (filter->param_rand_activation_f != NULL)
+		{
+			gs_effect_set_float(filter->param_rand_activation_f, filter->rand_activation_f);
+		}
+		if (filter->param_rand_instance_f != NULL)
+		{
+			gs_effect_set_float(filter->param_rand_instance_f, filter->rand_instance_f);
 		}
 		if (filter->param_uv_size != NULL)
 		{
