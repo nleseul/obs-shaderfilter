@@ -111,13 +111,13 @@ struct shader_filter_data
 	gs_eparam_t *param_uv_offset;
 	gs_eparam_t *param_uv_scale;
 	gs_eparam_t *param_uv_pixel_interval;
-	gs_eparam_t* param_uv_size;
+	gs_eparam_t *param_uv_size;
 	gs_eparam_t *param_elapsed_time;	
-	gs_eparam_t* param_loops;
-	gs_eparam_t* param_local_time;
+	gs_eparam_t *param_loops;
+	gs_eparam_t *param_local_time;
 	gs_eparam_t *param_rand_f;
-	gs_eparam_t* param_rand_instance_f;
-	gs_eparam_t* param_rand_activation_f;  	
+	gs_eparam_t *param_rand_instance_f;
+	gs_eparam_t *param_rand_activation_f;  	
 
 	int expand_left;
 	int expand_right;
@@ -178,7 +178,8 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	filter->param_uv_size = NULL;
 	filter->param_rand_f = NULL;	
 	filter->param_rand_activation_f = NULL;
-	filter->param_loops = NULL;	
+	filter->param_loops = NULL;
+	filter->param_local_time = NULL;
 
 	if (filter->effect != NULL)
 	{
@@ -284,9 +285,15 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 		{
 			filter->param_rand_activation_f = param;
 		}
+		else if (strcmp(info.name, "rand_instance_f") == 0) {
+			filter->param_rand_instance_f = param;
+		}
 		else if (strcmp(info.name, "loops") == 0)
 		{
 			filter->param_loops = param;
+		}
+		else if (strcmp(info.name, "local_time") == 0) {
+			filter->param_local_time = param;
 		}
 		else if (strcmp(info.name, "ViewProj") == 0 || strcmp(info.name, "image") == 0)
 		{
@@ -664,7 +671,7 @@ static void shader_filter_tick(void *data, float seconds)
 		filter->shader_start_time = filter->elapsed_time + seconds;
 	}
 	filter->elapsed_time += seconds;
-	filter->elapsed_time_loop += filter->elapsed_time;
+	filter->elapsed_time_loop += seconds;
 	if (filter->elapsed_time_loop > 1.) {
 		filter->elapsed_time_loop -= 1.;
 
@@ -673,7 +680,8 @@ static void shader_filter_tick(void *data, float seconds)
 		if (filter->loops >= 4194304)
 			filter->loops = -filter->loops;
 	}
-	filter->local_time = (float)os_gettime_ns();
+	filter->local_time = (float)(os_gettime_ns() / 1000000000.0);
+	
 
 	// undecided between this and "rand_float(1);" 
 	filter->rand_f = (float)((double)rand_interval(0, 10000) / (double)10000); 
@@ -693,53 +701,51 @@ static void shader_filter_render(void *data, gs_effect_t *effect)
 		{
 			return;
 		}
-		if (filter->param_uv_scale != NULL)
-		{
-			gs_effect_set_vec2(filter->param_uv_scale, &filter->uv_scale);
+		if (filter->param_uv_scale != NULL) {
+			gs_effect_set_vec2(filter->param_uv_scale,
+					   &filter->uv_scale);
 		}
-		if (filter->param_uv_offset != NULL)
-		{
-			gs_effect_set_vec2(filter->param_uv_offset, &filter->uv_offset);
+		if (filter->param_uv_offset != NULL) {
+			gs_effect_set_vec2(filter->param_uv_offset,
+					   &filter->uv_offset);
 		}
-		if (filter->param_uv_pixel_interval != NULL)
-		{
-			gs_effect_set_vec2(filter->param_uv_pixel_interval, &filter->uv_pixel_interval);
+		if (filter->param_uv_pixel_interval != NULL) {
+			gs_effect_set_vec2(filter->param_uv_pixel_interval,
+					   &filter->uv_pixel_interval);
 		}
-		if (filter->param_elapsed_time != NULL)
-		{
+		if (filter->param_elapsed_time != NULL) {
 			if (filter->use_shader_elapsed_time) {
 				gs_effect_set_float(
 					filter->param_elapsed_time,
 					filter->elapsed_time -
-					filter->shader_start_time);
-			}
-			else {
-				gs_effect_set_float(filter->param_elapsed_time, filter->elapsed_time);
+						filter->shader_start_time);
+			} else {
+				gs_effect_set_float(filter->param_elapsed_time,
+						    filter->elapsed_time);
 			}
 		}
-		if (filter->param_local_time != NULL)
-		{
-			gs_effect_set_float(filter->param_local_time, filter->local_time);
+		if (filter->param_uv_size != NULL) {
+			gs_effect_set_vec2(filter->param_uv_size,
+					   &filter->uv_size);
 		}
-		if (filter->param_loops != NULL)
-		{
+		if (filter->param_local_time != NULL) {
+			gs_effect_set_float(filter->param_local_time,
+					    filter->local_time);
+		}
+		if (filter->param_loops != NULL) {
 			gs_effect_set_int(filter->param_loops, filter->loops);
 		}
-		if (filter->param_rand_f != NULL)
-		{
-			gs_effect_set_float(filter->param_rand_f, filter->rand_f);
+		if (filter->param_rand_f != NULL) {
+			gs_effect_set_float(filter->param_rand_f,
+					    filter->rand_f);
 		}
-		if (filter->param_rand_activation_f != NULL)
-		{
-			gs_effect_set_float(filter->param_rand_activation_f, filter->rand_activation_f);
+		if (filter->param_rand_activation_f != NULL) {
+			gs_effect_set_float(filter->param_rand_activation_f,
+					    filter->rand_activation_f);
 		}
-		if (filter->param_rand_instance_f != NULL)
-		{
-			gs_effect_set_float(filter->param_rand_instance_f, filter->rand_instance_f);
-		}
-		if (filter->param_uv_size != NULL)
-		{
-			gs_effect_set_vec2(filter->param_uv_size, &filter->uv_size);
+		if (filter->param_rand_instance_f != NULL) {
+			gs_effect_set_float(filter->param_rand_instance_f,
+					    filter->rand_instance_f);
 		}
 
 		size_t param_count = filter->stored_param_list.num;

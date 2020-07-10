@@ -24,6 +24,11 @@ uniform float2 uv_scale;
 uniform float2 uv_size;
 uniform float2 uv_pixel_interval;
 uniform float rand_f;
+uniform float rand_instance_f;
+uniform float rand_activation_f;
+uniform int loops;
+uniform float local_time;
+
 
 uniform float2 mouse<
 	string name = "Virtual Mouse Coordinates";
@@ -66,12 +71,21 @@ uniform bool Apply_To_Alpha_Layer = true;
 float vorocloud(float2 p){
 	float f = 0.0;
 	float flow = 1.0;
+	float time = elapsed_time;
 	if(Invert_Direction){
 		flow *= -1;
 	}
+	/*
+	//periodically stop
+	if (loops % 16 >= 8.0)
+	{
+		time = local_time - elapsed_time;
+	}
+	*/
+		
 	float r = clamp(Ratio,-50,50);
-    float2 pp = cos(float2(p.x * 14.0, (16.0 * p.y + cos(floor(p.x * 30.0)) + flow * elapsed_time * PI2)) );
-    p = cos(p * 12.1 + pp * r + sin(elapsed_time/PI)*(r/PI) + 0.5 * cos(pp.x * r + sin(elapsed_time/PI)*(r/PI)));
+    float2 pp = cos(float2(p.x * 14.0, (16.0 * p.y + cos(floor(p.x * 30.0)) + flow * time * PI2)) );
+    p = cos(p * 12.1 + pp * r + sin(time/PI)*(r/PI) + 0.5 * cos(pp.x * r + sin(time/PI)*(r/PI)));
     
     float2 pts[4];    
     

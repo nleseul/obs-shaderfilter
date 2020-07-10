@@ -1,17 +1,7 @@
-// Night Sky shader by Charles Fettinger for obs-shaderfilter plugin 6/2020 v.6
+// Night Sky shader by Charles Fettinger for obs-shaderfilter plugin 6/2020 v.65
 // https://github.com/Oncorporation/obs-shaderfilter
 //https://www.shadertoy.com/view/3tfXRM Simple Night Sky - coverted from and updated
 
-uniform float4x4 ViewProj;
-uniform texture2d image;
-
-/*uniform float elapsed_time;
-uniform float2 uv_offset;
-uniform float2 uv_scale;
-uniform float2 uv_pixel_interval;
-uniform float rand_f;
-uniform float2 uv_size;
-*/
 uniform string notes = "add notes here";
 
 uniform float speed = 20.0;
@@ -37,10 +27,6 @@ uniform float Moon_Position_x = -0.6;
 uniform float Moon_Position_y = -0.3;
 
 #define PI 3.1416
-//#define SKY_COLOR float3(0.027, 0.151, 0.354)
-//#define LIGHT_SKY float3(0.45, 0.61, 0.98)
-//#define STAR_COLOR float3(0.92, 0.92, 0.14)
-//#define MOON_COLOR float3(0.81, 0.81, 0.81)
 
 //Noise functions from https://www.youtube.com/watch?v=zXsWftRdsvU
 float noise11(float p) {
