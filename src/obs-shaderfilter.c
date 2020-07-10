@@ -1,4 +1,4 @@
-// Version 1.11 by Charles Fettinger https://github.com/Oncorporation/obs-shaderfilter
+// Version 1.2 by Charles Fettinger https://github.com/Oncorporation/obs-shaderfilter
 // original version by nleseul https://github.com/nleseul/obs-shaderfilter
 #include <obs-module.h>
 #include <graphics/graphics.h>
@@ -478,7 +478,7 @@ static obs_properties_t *shader_filter_properties(void *data)
 	for (size_t param_index = 0; param_index < param_count; param_index++)
 	{
 		struct effect_param_data *param = (filter->stored_param_list.array + param_index);
-		gs_eparam_t* annot = gs_param_get_annotation_by_idx(param, param_index);
+		gs_eparam_t* annot = gs_param_get_annotation_by_idx(param, param_index);		
 		const char *param_name = param->name.array;
 		struct dstr display_name = {0};
 		dstr_ncat(&display_name, param_name, param->name.len);
@@ -557,7 +557,7 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 	for (size_t param_index = 0; param_index < param_count; param_index++)
 	{
 		struct effect_param_data *param = (filter->stored_param_list.array + param_index);
-		gs_eparam_t* annot = gs_param_get_annotation_by_idx(param, param_index);
+		gs_eparam_t* annot = gs_param_get_annotation_by_idx(param, param_index);		
 		const char* param_name = param->name.array;
 		struct dstr display_name = { 0 };
 		dstr_ncat(&display_name, param_name, param->name.len);
@@ -613,8 +613,7 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 			break;
 		case GS_SHADER_PARAM_STRING:
 			if (gs_effect_get_default_val(param->param) != NULL)
-				obs_data_set_default_string(settings, param_name, (const char *)gs_effect_get_default_val(param->param));
-			
+				obs_data_set_default_string(settings, param_name, (const char *)gs_effect_get_default_val(param->param));			
 			param->value.string = obs_data_get_string(settings, param_name);
 			break;
 		}
