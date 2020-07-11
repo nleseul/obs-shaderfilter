@@ -18,20 +18,25 @@ float4 mainImage(VertData v_in) : TARGET
 {
 
 	float4 rgba = image.Sample(textureSampler, v_in.uv);
-	if (invertImageColor)
-	{
-		rgba = InvertColor(rgba);
-	}
-	float intensity = dot(rgba * color ,float3(0.299,0.587,0.114));
+    if (rgba.a > 0.0)
+    {
+		
+    if (invertImageColor)
+    {
+        rgba = InvertColor(rgba);
+    }
+    float intensity = dot(rgba * color, float3(0.299, 0.587, 0.114));
 
-	//intensity = min(max(intensity,minIntensity),maxIntensity);
+    //intensity = min(max(intensity,minIntensity),maxIntensity);
 
 
-	if (invertAlphaChannel)
-	{
-		intensity = 1.0 - intensity;
-	}	
-	rgba *= color;
-	rgba.a = clamp((intensity * level),0.0,1.0);
+    if (invertAlphaChannel)
+    {
+        intensity = 1.0 - intensity;
+    }
+    rgba *= color;
+    rgba.a = clamp((intensity * level), 0.0, 1.0);
+	
+    }
 	return rgba;
 }

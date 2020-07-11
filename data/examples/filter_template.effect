@@ -1,4 +1,4 @@
-//My effect modified to by Me for use with obs-shaderfilter month/year v.01
+//My effect modified by Me for use with obs-shaderfilter month/year v.01
 uniform float4x4 ViewProj;
 uniform texture2d image;
 

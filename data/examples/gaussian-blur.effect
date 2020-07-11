@@ -63,7 +63,7 @@ float4 InternalGaussian(float2 p_uv, float2 p_uvStep, int p_radius,
 	float2 l_uvoffset = float2(0, 0);
 	for (int k = 1; k <= p_radius; k++) {
 		l_uvoffset += p_uvStep;
-		float l_g = Gaussian(k, dot(uv_pixel_interval,1);
+        float l_g = Gaussian(k, dot(uv_pixel_interval, 1));
 		float4 l_p = p_image.Sample(pointClampSampler, p_uv + l_uvoffset) * l_g;
 		float4 l_n = p_image.Sample(pointClampSampler, p_uv - l_uvoffset) * l_g;
 		l_value += l_p + l_n;

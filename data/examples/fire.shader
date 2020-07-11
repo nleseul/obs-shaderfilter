@@ -1,6 +1,17 @@
-//fire shader modified by Charles Fettinger for use with obs-shaderfilter 07/20 v.01
+//fire shader modified by Charles Fettinger for use with obs-shaderfilter 07/20 v.5
 // https://github.com/Oncorporation/obs-shaderfilter plugin
 // https://www.shadertoy.com/view/MtcGD7 original version
+
+//v.5
+// flicker
+// flame type
+// apply to image 
+// replace image color
+// speed
+// flame size
+// alpha
+// invert direction/position
+
 
 //Section to converting GLSL to HLSL - can delete
 #define vec2 float2
@@ -34,11 +45,17 @@ uniform float rand_activation_f;
 uniform int loops;
 uniform float local_time;
 */
-uniform string notes = "add notes here";
+uniform int Alpha_Percentage = 100; //<Range(0.0,100.0)>
+uniform int Speed = 100;
+uniform int Flame_Size = 100;
+uniform int Fire_Type = 1;
 
-uniform bool Invert_Direction <
-	string name = "Invert Direction";
-> = true;
+uniform bool Invert <
+	string name = "Invert";
+> = false;
+uniform bool Apply_To_Image;
+uniform bool Replace_Image_Color;
+uniform string Notes = "add notes here";
 
 vec3 rgb2hsv(vec3 c)
 {
@@ -61,7 +78,7 @@ vec3 hsv2rgb(vec3 c)
 float rand(vec2 n)
 {
     return fract(sin(cos(dot(n, vec2(12.9898, 12.1414)))) * 83758.5453);
-    //return rand_f;
+    //return sin(rand_f, n);
 }
 
 float noise(vec2 n)
@@ -85,9 +102,20 @@ float fbm(vec2 n)
 
 float4 mainImage(VertData v_in) : TARGET
 {
-    //float4 rgba = image.Sample(textureSampler, v_in.uv);
-    float2 iResolution = 1 - v_in.uv  +  float2( .99, 1.15);
-    float iTime = elapsed_time;
+    float2 iResolution = uv_scale;
+    float flame_size = clamp((float)Flame_Size * .01,-5,5);
+
+    // inverting direction is logically inverted to allow the bottom up to be normal
+    float fire_base = (v_in.uv.y / iResolution.y);
+    float2 fire_pix = v_in.uv.xy + float2(flame_size -1,0);
+    float direction = -1.0 * clamp((float)Speed*.01,-5,5);        
+    if (!Invert)
+    {
+        direction *= -1.0;
+        fire_base = 1 - fire_base;
+        fire_pix = 1 - fire_pix;
+    }    
+    float iTime = direction * elapsed_time;
     
     const vec3 c1 = vec3(0.5, 0.0, 0.1);
     const vec3 c2 = vec3(0.9, 0.1, 0.0);
@@ -96,36 +124,82 @@ float4 mainImage(VertData v_in) : TARGET
     const vec3 c5 = vec3(0.1, 0.1, 0.1);
     const vec3 c6 = vec3(0.9, 0.9, 0.9);
 
-    vec2 speed = vec2(1.2, 0.1);
-    float shift = 1.327 - sin(iTime * 2.0) / 2.4;
-    float alpha = 1.0;
+    vec2 speed = vec2(1.2, 0.1) * clamp((float)Speed*.01,-5,5);
+    float shift = 1.327 * (1/flame_size) - sin(iTime * 2.0) / 2.4;
+    float alpha = saturate((float)Alpha_Percentage * .01);
     
     //change the constant term for all kinds of cool distance versions,
     //make plus/minus to switch between 
     //ground fire and fire rain!
     float dist = 3.5 - sin(iTime * 0.4) / 1.89;
     
-    vec2 p = v_in.uv.xy * dist / iResolution.xx;
+    vec2 p = fire_pix * dist / iResolution.xx;
     p.x -= iTime / 1.1;
-    float q = fbm(p - iTime * 0.01 + 1.0 * sin(iTime) / 10.0);
-    float qb = fbm(p - iTime * 0.002 + 0.1 * cos(iTime) / 5.0);
-    float q2 = fbm(p - iTime * 0.44 - 5.0 * cos(iTime) / 7.0) -6.0;
-    float q3 = fbm(p - iTime * 0.9 - 10.0 * cos(iTime) / 30.0) -4.0;
-    float q4 = fbm(p - iTime * 2.0 - 20.0 * sin(iTime) / 20.0) +2.0;
-    q = (q + qb - .4 * q2 - 2.0 * q3 + .6 * q4) / 3.8;
-    vec2 r = vec2(fbm(p + q / 2.0 - iTime* speed.x - p.x - p.y),
-    fbm(p - q - iTime* speed.y));
-    vec3 c = mix(c1, c2, fbm(p + r)) + mix(c3, c4, r.x) - mix(c5, c6, r.y);
-    vec3 color = vec3(c * cos(shift * 1 - v_in.uv.y / iResolution.y));
-    color += .05;
-    color.r *= .8;
-    vec3 hsv = rgb2hsv(color);
-    hsv.y *= hsv.z * 1.1;
-    hsv.z *= hsv.y * 1.13;
-    hsv.y = (2.2 - hsv.z * .9) * 1.20;
-    color = hsv2rgb(hsv);
+    float3 black = float3(0,0,0);
+    vec3 fire;
+
+    if (Fire_Type == 1)
+    {
+        //fire version 1 larger and more volume
+        float q = fbm(p - iTime * 0.01 + 1.0 * sin(iTime) / 10.0);
+        float qb = fbm(p - iTime * 0.002 + 0.1 * cos(iTime) / 5.0);
+        float q2 = fbm(p - iTime * 0.44 - 5.0 * cos(iTime) / 7.0) -6.0;
+        float q3 = fbm(p - iTime * 0.9 - 10.0 * cos(iTime) / 30.0) -4.0;
+        float q4 = fbm(p - iTime * 2.0 - 20.0 * sin(iTime) / 20.0) +2.0;
+        q = (q + qb - .4 * q2 - 2.0 * q3 + .6 * q4) / 3.8;
+
+        vec2 r = vec2(fbm(p + q / 2.0 - iTime* speed.x - p.x - p.y),
+        fbm(p - q - iTime* speed.y));
+        vec3 c = mix(c1, c2, fbm(p + r)) + mix(c3, c4, r.x) - mix(c5, c6, r.y);
+        fire = vec3(c * max(cos(shift * fire_base) - (rand_f *.1),0));
+
+        fire += .05;
+        fire.r *= .8;
+        vec3 hsv = rgb2hsv(fire);
+        hsv.y *= hsv.z * 1.1;
+        hsv.z *= hsv.y * 1.13;
+        hsv.y = (2.2 - hsv.z * .9) * 1.20;
+        fire = hsv2rgb(hsv);        
+    }
+    else
+    {
+        // fire version 0 - smaller and more whisps
+        p += (rand_f *.01);
+        float q = fbm(p - iTime * 0.3+1.0*sin(iTime+0.5)/2.0);
+        float qb = fbm(p - iTime * 0.4+0.1*cos(iTime)/2.0);
+        float q2 = fbm(p - iTime * 0.44 - 5.0*cos(iTime)/2.0) - 6.0;
+        float q3 = fbm(p - iTime * 0.9 - 10.0*cos(iTime)/15.0)-4.0;
+        float q4 = fbm(p - iTime * 1.4 - 20.0*sin(iTime)/14.0)+2.0;
+        q = (q + qb - .4 * q2 -2.0*q3  + .6*q4)/3.8;
+
+        vec2 r = vec2(fbm(p + q /2.0 + iTime * speed.x - p.x - p.y), fbm(p + q - iTime * speed.y)) * shift;
+        vec3 c = mix(c1, c2, fbm(p + r)) + mix(c3, c4, r.x) - mix(c5, c6, r.y);
+        //fire = vec3(1.0/(pow(c+1.61,vec3(4.0,4.0,4.0))) * max(cos(shift * fire_base),0));
+        
+        fire = vec3(1.0,.2,.05)/(pow((r.y+r.y)* max(.0,p.y)+0.1, 4.0)) ;//* max(.1,(cos(shift * fire_base)));
+        fire += (black*0.01*pow((r.y+r.y)*.65,5.0)+0.055)*mix( vec3(.9,.4,.3),vec3(.7,.5,.2), v_in.uv.y);
+        fire = fire/(1.0+max(black,fire));
+    }
+    float4 rgba = vec4(fire.x, fire.y, fire.z, alpha);
     
-    return vec4(color.x, color.y, color.z, alpha);
+    if (Apply_To_Image)
+    {
+        float4 color = image.Sample(textureSampler, v_in.uv);
+        float4 original_color = color;
+        if (color.a > 0.0)
+        {        
+            float4 luma = dot(color, float4(0.30, 0.59, 0.11, color.a));
+            if (Replace_Image_Color)
+                color = luma;
+            rgba = lerp(original_color, rgba * color, alpha);
+        }
+        else
+        {
+            rgba = color;
+        }
+		
+    }
+    return rgba;
 }
 
 
