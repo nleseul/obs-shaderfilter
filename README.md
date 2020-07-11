@@ -127,7 +127,7 @@ I recommend *.shader* as they do not require `Use Effect File (.effect)` as pixe
 * *filter_template.shader* &mdash;A copy of the default shader used by the plugin, which simply
   renders the input directly to the output after scaling UVs to reflect any extra border pixels. This is useful as a starting
   point for developing new pixel shaders. (Note that modifying this file will not affect the internal effect template used by the plugin.)
-* *fire.shader*&mdash; A fire example converted from shadertoy with lots of added options.
+* *fire.shader*&mdash; A fire example converted from shadertoy with lots of added options.[youtube example](https://youtu.be/jcTsC0zSNAs)
 * *gradient.shader*&mdash; This shader has a little brother *simple_gradient.shader*, but lets you choose three colors and animate gradients.
 * *glitch_analog.shader*&mdash;A shader that creates glitch effects similar to analog signal issues. Includes support for alpha channel.   
 * *hexagon.shader*&mdash;A shader that creates a grid of hexagons with several options for you to set. This is an example of making shapes.
