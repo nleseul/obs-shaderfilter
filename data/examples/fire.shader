@@ -1,4 +1,4 @@
-//fire shader modified by Charles Fettinger for use with obs-shaderfilter 07/20 v.5
+//fire shader modified by Charles Fettinger for use with obs-shaderfilter 07/20 v.6
 // https://github.com/Oncorporation/obs-shaderfilter plugin
 // https://www.shadertoy.com/view/MtcGD7 original version
 
@@ -45,17 +45,19 @@ uniform float rand_activation_f;
 uniform int loops;
 uniform float local_time;
 */
-uniform int Alpha_Percentage = 100; //<Range(0.0,100.0)>
+uniform int Alpha_Percentage = 90; //<Range(0.0,100.0)>
 uniform int Speed = 100;
-uniform int Flame_Size = 100;
+uniform int Flame_Size = 70;
 uniform int Fire_Type = 1;
 
 uniform bool Invert <
 	string name = "Invert";
 > = false;
+uniform float lumaMin = 0.01;
+uniform float lumaMinSmooth = 0.04;
 uniform bool Apply_To_Image;
 uniform bool Replace_Image_Color;
-uniform string Notes = "add notes here";
+uniform string Notes = "Luma cuts reveals background, flame size is percentage screen size, Alpha Percentage adjusts color";
 
 vec3 rgb2hsv(vec3 c)
 {
@@ -149,9 +151,9 @@ float4 mainImage(VertData v_in) : TARGET
         q = (q + qb - .4 * q2 - 2.0 * q3 + .6 * q4) / 3.8;
 
         vec2 r = vec2(fbm(p + q / 2.0 - iTime* speed.x - p.x - p.y),
-        fbm(p - q - iTime* speed.y));
+        	fbm(p - q - iTime* speed.y)) ;
         vec3 c = mix(c1, c2, fbm(p + r)) + mix(c3, c4, r.x) - mix(c5, c6, r.y);
-        fire = vec3(c * max(cos(shift * fire_base) - (rand_f *.1),0));
+        fire = vec3(c * max(cos(shift * fire_base) - (rand_f *.05),0.05));
 
         fire += .05;
         fire.r *= .8;
@@ -172,7 +174,8 @@ float4 mainImage(VertData v_in) : TARGET
         float q4 = fbm(p - iTime * 1.4 - 20.0*sin(iTime)/14.0)+2.0;
         q = (q + qb - .4 * q2 -2.0*q3  + .6*q4)/3.8;
 
-        vec2 r = vec2(fbm(p + q /2.0 + iTime * speed.x - p.x - p.y), fbm(p + q - iTime * speed.y)) * shift;
+        vec2 r = vec2(fbm(p + q /2.0 + iTime * speed.x - p.x - p.y), 
+        	fbm(p + q - iTime * speed.y)) * shift;
         vec3 c = mix(c1, c2, fbm(p + r)) + mix(c3, c4, r.x) - mix(c5, c6, r.y);
         //fire = vec3(1.0/(pow(c+1.61,vec3(4.0,4.0,4.0))) * max(cos(shift * fire_base),0));
         
@@ -181,17 +184,22 @@ float4 mainImage(VertData v_in) : TARGET
         fire = fire/(1.0+max(black,fire));
     }
     float4 rgba = vec4(fire.x, fire.y, fire.z, alpha);
+	
+	// remove dark areas per user
+	float luma_fire = dot(rgba.rgb,float3(0.299,0.587,0.114));
+	float luma_min_fire = smoothstep(lumaMin, lumaMin + lumaMinSmooth, luma_fire);
+	rgba.a = clamp(luma_min_fire,0.0,alpha);
     
     if (Apply_To_Image)
     {
         float4 color = image.Sample(textureSampler, v_in.uv);
         float4 original_color = color;
         if (color.a > 0.0)
-        {        
+        {    
             float4 luma = dot(color, float4(0.30, 0.59, 0.11, color.a));
             if (Replace_Image_Color)
-                color = luma;
-            rgba = lerp(original_color, rgba * color, alpha);
+                color = luma;            
+            rgba = lerp(original_color, lerp(original_color,rgba * color,rgba.a), alpha);
         }
         else
         {
