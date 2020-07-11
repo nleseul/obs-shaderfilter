@@ -1,4 +1,4 @@
-# obs-shaderfilter 1.2
+# obs-shaderfilter 1.21
 
 ## Introduction
 
@@ -97,15 +97,16 @@ handle these variables being missing, but the shader may malfunction.)
 * **`Use Shader Time`**&mdash;Start the effect from the loadtime of the shader, not the start up time of OBS Studio.
 * **`Override Entire Effect`** renamed **`Use Effect File (.effect)`** in UI and documentation
 * Textures moved from the shaders folder to the textures folder. Existing textures are not deleted so as to not disrupt you current scenes.(1.2)
+* 1.21 minor bug fixes and shader/effect updates
   
 ### Example shaders
 
 Several examples are provided in the plugin's *data/examples* folder. These can be used as-is for some hopefully
 useful common tasks, or used as a reference in developing your own shaders. Note that the *.shader* and *.effect* 
 extensions are for clarity only, and have no specific meaning to the plugin. Text files with any extension can be
-loaded. 
+loaded. In a standard, *.effect* files include a vertex shader and *.shader* only has a pixel shader.
 
-I recommend *.shader* as they do not require `override_entire_effect` as pixel shaders, while *.effect* signifies vertex shaders with `override_entire_effect` required.
+I recommend *.shader* as they do not require `Use Effect File (.effect)` as pixel shaders, while *.effect* signifies vertex shaders with `Use Effect File (.effect)` required.
 
 * *animated_texture.effect*&mdash; Animates a texture with polar sizing and color options
 * *ascii.shader*&mdash; a little example of ascii art
@@ -126,10 +127,11 @@ I recommend *.shader* as they do not require `override_entire_effect` as pixel s
 * *filter_template.shader* &mdash;A copy of the default shader used by the plugin, which simply
   renders the input directly to the output after scaling UVs to reflect any extra border pixels. This is useful as a starting
   point for developing new pixel shaders. (Note that modifying this file will not affect the internal effect template used by the plugin.)
-* *fire.shader*&mdash; A fire example converted from shadertoy
+* *fire.shader*&mdash; A fire example converted from shadertoy with lots of added options.
 * *gradient.shader*&mdash; This shader has a little brother *simple_gradient.shader*, but lets you choose three colors and animate gradients.
 * *glitch_analog.shader*&mdash;A shader that creates glitch effects similar to analog signal issues. Includes support for alpha channel.   
 * *hexagon.shader*&mdash;A shader that creates a grid of hexagons with several options for you to set. This is an example of making shapes.
+* *gaussian-simple.shader*&mdash; A simple gaussian shader for bluring. Really implements closer to a box shader. 
 * *luminance.shader*&mdash;A shader that adds an alpha layer based on brightness instead of color. Extremely useful for making live 
   video special effects, like replacing backgrounds or foregrounds.
 * *matrix.effect*&mdash; The cat is a glitch conversion from shadertoy. Updated with several configurable options.(1.2)
@@ -148,6 +150,7 @@ I recommend *.shader* as they do not require `override_entire_effect` as pixel s
   does not increase with its size, so you should be able to make your blur size as large as you like wtihout affecting
   GPU load. 
 * *repeat.effect* (Use Effect File (.effect))&mdash;Duplicates the input video as many times as you like and organizes on the screen.
+* *repeat_texture.effect* (Use Effect File (.effect))&mdash; As above, but add a texture input to repeat instead of the input source.
 * *rgb_color_wheel.shader&mdash;A rotatable RGB color wheel!
 * *rotatoe.effect* (Use Effect File (.effect))&mdash;A test rotation effect
 * *rounded_rect.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded 

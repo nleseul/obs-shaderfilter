@@ -1,6 +1,6 @@
-//My shader modified to by Me for use with obs-shaderfilter month/year v.01
+//My shader modified by Me for use with obs-shaderfilter month/year v.01
 
-//Section to converting GLSL to HLSL - can delete
+//Section to converting GLSL to HLSL - can delete if unneeded
 #define vec2 float2
 #define vec3 float3
 #define vec4 float4
@@ -17,6 +17,11 @@
 /*
 **Shaders have these variables pre loaded by the plugin**
 **this section can be deleted**
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
 
 uniform float4x4 ViewProj;
 uniform texture2d image;

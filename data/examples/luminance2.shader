@@ -20,23 +20,28 @@ float4 mainImage(VertData v_in) : TARGET
 {
 
 	float4 rgba = image.Sample(textureSampler, v_in.uv);
-	if (invertImageColor)
-	{
-		rgba = InvertColor(rgba);
-	}
-	float luminance = dot(rgba * color ,float3(0.299,0.587,0.114));
+    if (rgba.a > 0.0)
+    {
+    
+    if (invertImageColor)
+    {
+        rgba = InvertColor(rgba);
+    }
+    float luminance = dot(rgba * color, float3(0.299, 0.587, 0.114));
 
 	//intensity = min(max(intensity,minIntensity),maxIntensity);
-	float clo = smoothstep(lumaMin, lumaMin + lumaMinSmooth, luminance);
-	float chi = 1. - smoothstep(lumaMax - lumaMaxSmooth, lumaMax, luminance);
+    float clo = smoothstep(lumaMin, lumaMin + lumaMinSmooth, luminance);
+    float chi = 1. - smoothstep(lumaMax - lumaMaxSmooth, lumaMax, luminance);
 
-	float amask = clo * chi;
+    float amask = clo * chi;
 
-	if (invertAlphaChannel)
-	{
-		amask = 1.0 - amask;
-	}	
-	rgba *= color;
-	rgba.a = clamp(amask,0.0,1.0);
+    if (invertAlphaChannel)
+    {
+        amask = 1.0 - amask;
+    }
+    rgba *= color;
+    rgba.a = clamp(amask, 0.0, 1.0);
+        
+    }
 	return rgba;
 }

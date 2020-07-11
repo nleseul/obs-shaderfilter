@@ -1,4 +1,4 @@
-// Version 1.2 by Charles Fettinger https://github.com/Oncorporation/obs-shaderfilter
+// Version 1.21 by Charles Fettinger https://github.com/Oncorporation/obs-shaderfilter
 // original version by nleseul https://github.com/nleseul/obs-shaderfilter
 #include <obs-module.h>
 #include <graphics/graphics.h>
@@ -147,6 +147,23 @@ struct shader_filter_data
 };
 
 
+static unsigned int rand_interval(unsigned int min, unsigned int max)
+{
+	unsigned int r;
+	const unsigned int range = 1 + max - min;
+	const unsigned int buckets = RAND_MAX / range;
+	const unsigned int limit = buckets * range;
+
+	/* Create equal size buckets all in a row, then fire randomly towards
+	 * the buckets until you land in one of them. All buckets are equally
+	 * likely. If you land off the end of the line of buckets, try again. */
+	do
+	{
+		r = rand();
+	} while (r >= limit);
+
+	return min + (r / buckets);
+}
 
 static void shader_filter_reload_effect(struct shader_filter_data *filter)
 {
@@ -191,6 +208,8 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 
 	// Load text and build the effect from the template, if necessary. 
 	const char *shader_text = NULL;
+	bool use_template =
+		!obs_data_get_bool(settings, "override_entire_effect");
 
 	if (obs_data_get_bool(settings, "from_file"))
 	{
@@ -200,6 +219,7 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	else
 	{
 		shader_text = bstrdup(obs_data_get_string(settings, "shader_text"));
+		use_template = true;
 	}
 
 	if (shader_text == NULL)
@@ -211,8 +231,7 @@ static void shader_filter_reload_effect(struct shader_filter_data *filter)
 	size_t effect_body_length = strlen(shader_text);
 	size_t effect_footer_length = strlen(effect_template_end);
 	size_t effect_buffer_total_size = effect_header_length + effect_body_length + effect_footer_length;
-
-	bool use_template = !obs_data_get_bool(settings, "override_entire_effect");
+	
 	bool use_sliders = !obs_data_get_bool(settings, "use_sliders");
 	bool use_sources = !obs_data_get_bool(settings, "use_sources");
 	bool use_shader_elapsed_time = !obs_data_get_bool(settings, "use_shader_elapsed_time");
@@ -478,7 +497,7 @@ static obs_properties_t *shader_filter_properties(void *data)
 	for (size_t param_index = 0; param_index < param_count; param_index++)
 	{
 		struct effect_param_data *param = (filter->stored_param_list.array + param_index);
-		gs_eparam_t* annot = gs_param_get_annotation_by_idx(param, param_index);		
+		gs_eparam_t* annot = gs_param_get_annotation_by_idx(param->param, param_index);		
 		const char *param_name = param->name.array;
 		struct dstr display_name = {0};
 		dstr_ncat(&display_name, param_name, param->name.len);
@@ -557,7 +576,7 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 	for (size_t param_index = 0; param_index < param_count; param_index++)
 	{
 		struct effect_param_data *param = (filter->stored_param_list.array + param_index);
-		gs_eparam_t* annot = gs_param_get_annotation_by_idx(param, param_index);		
+		gs_eparam_t* annot = gs_param_get_annotation_by_idx(param->param, param_index);		
 		const char* param_name = param->name.array;
 		struct dstr display_name = { 0 };
 		dstr_ncat(&display_name, param_name, param->name.len);
@@ -614,28 +633,10 @@ static void shader_filter_update(void *data, obs_data_t *settings)
 		case GS_SHADER_PARAM_STRING:
 			if (gs_effect_get_default_val(param->param) != NULL)
 				obs_data_set_default_string(settings, param_name, (const char *)gs_effect_get_default_val(param->param));			
-			param->value.string = obs_data_get_string(settings, param_name);
+			param->value.string = (char)obs_data_get_string(settings, param_name);
 			break;
 		}
 	}
-}
-
-static unsigned int rand_interval(unsigned int min, unsigned int max)
-{
-	unsigned int r;
-	const unsigned int range = 1 + max - min;
-	const unsigned int buckets = RAND_MAX / range;
-	const unsigned int limit = buckets * range;
-
-	/* Create equal size buckets all in a row, then fire randomly towards
-	 * the buckets until you land in one of them. All buckets are equally
-	 * likely. If you land off the end of the line of buckets, try again. */
-	do
-	{
-		r = rand();
-	} while (r >= limit);
-
-	return min + (r / buckets);
 }
 
 static void shader_filter_tick(void *data, float seconds)

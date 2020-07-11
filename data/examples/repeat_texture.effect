@@ -34,6 +34,7 @@ sampler_state base_sampler {
 struct VertIn {
 	float4 pos : POSITION;
 	float2 uv_0  : TEXCOORD0;
+	float2 uv_1  : TEXCOORD1;
 };
 
 struct VertOut {

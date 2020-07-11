@@ -55,13 +55,18 @@ VertDataOut mainTransform(VertDataIn v_in)
 float4 PSAlphaMaskRGBA(VertDataOut v_in) : TARGET
 {
 	float4 rgba = image.Sample(textureSampler, v_in.uv) ;
-	float intensity = dot(rgba * color ,float3(0.299,0.587,0.114));
-	if (invertAlphaChannel)
-	{
-		intensity = 1.0 - intensity;
-	}
-	rgba *= color;
-	rgba.a = clamp((intensity * level),0.0,1.0);
+    if (rgba.a > 0.0)
+    {
+    
+    float intensity = dot(rgba * color, float3(0.299, 0.587, 0.114));
+    if (invertAlphaChannel)
+    {
+        intensity = 1.0 - intensity;
+    }
+    rgba *= color;
+    rgba.a = clamp((intensity * level), 0.0, 1.0);
+	
+    }
 	return rgba;
 }
 
