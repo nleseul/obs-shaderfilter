@@ -53,7 +53,7 @@ VertData mainTransform(VertData v_in)
 	if (randomize_movement)
 	{
 		t = (rand_f * 2) - 1.0f;
-        s = (rand_f * 2) - 1.0f;;
+        s = (1 - rand_f * 2) - 1.0f;;
 		noise = clamp( rand_f * random_scale,-0.99, 0.99);
 	}
 	else
@@ -64,12 +64,17 @@ VertData mainTransform(VertData v_in)
 	}
 
 	float3 direction_from_center = float3((v_in.uv.x - 0.5 + noise) * uv_pixel_interval.y / uv_pixel_interval.x, v_in.uv.y - 0.5 + noise, 1);
-	float3 min_pos = pos + direction_from_center * 0.5;
-	float3 max_pos = pos + direction_from_center * 0.5;
+	float3 min_pos;
+	float3 max_pos;
     if (worble)
     {
         min_pos = pos + direction_from_center * min_growth_pixels * 0.5;
         max_pos = pos + direction_from_center * max_growth_pixels * 0.5;
+    }
+    else
+    {
+    	min_pos = pos + direction_from_center * 0.5;
+		max_pos = min_pos;
     }
 
 	float3 current_pos = min_pos * (1 - t) + max_pos * t;
