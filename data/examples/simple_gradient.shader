@@ -5,9 +5,11 @@
 
 uniform int speed_percentage = 240; //<Range(-100.0, 100.0)>
 uniform int alpha_percentage = 90;
-uniform bool Apply_To_Alpha_Layer = false;
 uniform bool Lens_Flair = false;
 uniform bool Animate_Lens_Flair = false;
+uniform bool Apply_To_Alpha_Layer = false;
+uniform bool Apply_To_Specific_Color;
+uniform float4 Color_To_Replace;
 uniform string notes = "This gradient is very basic from the top left corner. Red on horizontal, Green vertical, Blue Diagonal. Apply To Alpha Layer will add the gradient colors to the background. Lens Flair will brighten the scene from the bottom right. There is also a lot of unused code to play with in the shader file, delimted by /* ... */";
 
 float4 mainImage(VertData v_in) : TARGET
@@ -75,15 +77,21 @@ float4 mainImage(VertData v_in) : TARGET
 
 	rgb = smoothstep(start_color, end_color, distance(v_in.uv , sin(elapsed_time * speed * no_colors) * (float2(1.0,1.0) * uv_scale + uv_offset)));
 */
-
+    float4 rgba;
 	if (Apply_To_Alpha_Layer == false)
 	{
-		return lerp(background_color,float4(rgb, 1.0),alpha);
+		rgba = lerp(background_color,float4(rgb, 1.0),alpha);
 	}
 	else
 	{
-		return lerp(background_color,background_color * float4(rgb,1.0), alpha);
+		rgba =  lerp(background_color,background_color * float4(rgb,1.0), alpha);
 	}
-
+    if (Apply_To_Specific_Color)
+    {
+        float4 original_color = background_color;
+        background_color = (distance(background_color.rgb, Color_To_Replace.rgb) <= 0.075) ? rgba : background_color;
+        rgba = lerp(original_color, background_color, clamp(alpha, 0, 1.0));
+    }
+    return rgba;
 }
 

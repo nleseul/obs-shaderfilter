@@ -4,6 +4,8 @@ uniform float speed = 2.0;
 uniform float color_depth = 2.10;
 uniform bool Apply_To_Image;
 uniform bool Replace_Image_Color;
+uniform bool Apply_To_Specific_Color;
+uniform float4 Color_To_Replace;
 uniform float Alpha_Percentage = 100; //<Range(0.0,100.0)>
 uniform int center_width_percentage = 50;
 uniform int center_height_percentage = 50;
@@ -30,16 +32,25 @@ float4 mainImage(VertData v_in) : TARGET
 
 	rgba.rgb = hsv2rgb(float3((angle / PI*0.5) + angleMod,r,1.0));
 
+    float4 color;
+    float4 original_color;
 	if (Apply_To_Image)
 	{
-		float4 color = image.Sample(textureSampler, v_in.uv);
-		float4 original_color = color;
+		color = image.Sample(textureSampler, v_in.uv);
+		original_color = color;
 		float4 luma = dot(color,float4(0.30, 0.59, 0.11, 1.0));
 		if (Replace_Image_Color)
 			color = luma;
 		rgba = lerp(original_color, rgba * color,clamp(Alpha_Percentage *.01 ,0,1.0));
 		
 	}
+    if (Apply_To_Specific_Color)
+    {
+        color = image.Sample(textureSampler, v_in.uv);
+        original_color = color;
+        color = (distance(color.rgb, Color_To_Replace.rgb) <= 0.075) ? rgba : color;
+        rgba = lerp(original_color, color, clamp(Alpha_Percentage * .01, 0, 1.0));
+    }
 
 	return rgba;
 }

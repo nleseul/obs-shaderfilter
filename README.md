@@ -149,12 +149,15 @@ I recommend *.shader* as they do not require `Use Effect File (.effect)` as pixe
   Pixels inside the bounds of the input are treated as solid; pixels outside are treated as opaque. The complexity of the blur
   does not increase with its size, so you should be able to make your blur size as large as you like wtihout affecting
   GPU load. 
+* *remove_partial_pixels.shader*&mdash;A shader that removes pixels with partial alpha, excellent for cleaning up green screens.
 * *repeat.effect* (Use Effect File (.effect))&mdash;Duplicates the input video as many times as you like and organizes on the screen.
 * *repeat_texture.effect* (Use Effect File (.effect))&mdash; As above, but add a texture input to repeat instead of the input source.
 * *rgb_color_wheel.shader&mdash;A rotatable RGB color wheel!
 * *rotatoe.effect* (Use Effect File (.effect))&mdash;A test rotation effect
 * *rounded_rect.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded 
   edges.
+* *rounded_rect2.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded [https://youtu.be/J8mQIEKvWt0](https://youtu.be/J8mQIEKvWt0)
+  edges. Updated by Exeldro. Several shaders have been upgraded with Apply To Specific Color for you to animate borders.
 * *scan_line.shader*&mdash;An effect that creates old style tv scan lines, for glitch style effects. 
 * *selective_color.shader*&mdash;Create black and white effects with some colorization. (defaults: .4,.03,.25,.25, 5.0, true,true, true, true. cuttoff higher = less color, 0 = all 1 = none)
 * *shake.effect* (Use Effect File (.effect))&mdash;creates random screen glitch style shake. Keep the random_scale low for small (0.2-1) for small

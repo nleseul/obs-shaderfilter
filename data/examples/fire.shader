@@ -57,6 +57,8 @@ uniform float lumaMin = 0.01;
 uniform float lumaMinSmooth = 0.04;
 uniform bool Apply_To_Image;
 uniform bool Replace_Image_Color;
+uniform bool Apply_To_Specific_Color;
+uniform float4 Color_To_Replace;
 uniform string Notes = "Luma cuts reveals background, flame size is percentage screen size, Alpha Percentage adjusts color";
 
 vec3 rgb2hsv(vec3 c)
@@ -190,10 +192,12 @@ float4 mainImage(VertData v_in) : TARGET
 	float luma_min_fire = smoothstep(lumaMin, lumaMin + lumaMinSmooth, luma_fire);
 	rgba.a = clamp(luma_min_fire,0.0,alpha);
     
+    float4 color;
+    float4 original_color;
     if (Apply_To_Image)
     {
-        float4 color = image.Sample(textureSampler, v_in.uv);
-        float4 original_color = color;
+        color = image.Sample(textureSampler, v_in.uv);
+        original_color = color;
         if (color.a > 0.0)
         {    
             float4 luma = dot(color, float4(0.30, 0.59, 0.11, color.a));
@@ -206,6 +210,13 @@ float4 mainImage(VertData v_in) : TARGET
             rgba = color;
         }
 		
+    }
+    if (Apply_To_Specific_Color)
+    {
+        color = image.Sample(textureSampler, v_in.uv);
+        original_color = color;
+        color = (distance(color.rgb, Color_To_Replace.rgb) <= 0.075) ? rgba : color;
+        rgba = lerp(original_color, color, clamp(Alpha_Percentage * .01, 0, 1.0));
     }
     return rgba;
 }

@@ -10,6 +10,8 @@ uniform bool Rotational;
 uniform float Rotation_Offset = 0.0; //<Range(0.0, 6.28318531)>
 uniform bool Apply_To_Image;
 uniform bool Replace_Image_Color;
+uniform bool Apply_To_Specific_Color;
+uniform float4 Color_To_Replace;
 uniform string Notes = "Spread is wideness of color and is limited between .25 and 10. Edit at your own risk";
 
 float hueToRGB(float v1, float v2, float vH) {
@@ -74,15 +76,24 @@ float4 mainImage(VertData v_in) : TARGET
 	float4 hsl = float4(hue, clamp(Saturation, 0.0, 1.0), clamp(Luminosity, 0.0, 1.0), 1.0);
 	float4 rgba = HSLtoRGB(hsl);
 	
+    float4 color;
+    float4 original_color;
 	if (Apply_To_Image)
 	{
-		float4 color = image.Sample(textureSampler, v_in.uv);
-		float4 original_color = color;
+		color = image.Sample(textureSampler, v_in.uv);
+		original_color = color;
 		float4 luma = dot(color,float4(0.30, 0.59, 0.11, 1.0));
 		if (Replace_Image_Color)
 			color = luma;
 		rgba = lerp(original_color, rgba * color,clamp(Alpha_Percentage *.01 ,0,1.0));
 		
 	}
+    if (Apply_To_Specific_Color)
+    {
+        color = image.Sample(textureSampler, v_in.uv);
+        original_color = color;
+        color = (distance(color.rgb, Color_To_Replace.rgb) <= 0.075) ? rgba : color;
+        rgba = lerp(original_color, color, clamp(Alpha_Percentage * .01, 0, 1.0));
+    }
 	return rgba;
 }
