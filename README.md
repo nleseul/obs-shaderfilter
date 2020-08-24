@@ -156,7 +156,7 @@ I recommend *.shader* as they do not require `Use Effect File (.effect)` as pixe
 * *rotatoe.effect* (Use Effect File (.effect))&mdash;A test rotation effect
 * *rounded_rect.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded 
   edges.
-* *rounded_rect2.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded [https://youtu.be/J8mQIEKvWt0](https://youtu.be/J8mQIEKvWt0)
+* *rounded_stroke.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded [https://youtu.be/J8mQIEKvWt0](https://youtu.be/J8mQIEKvWt0)
   edges. Updated by Exeldro. Several shaders have been upgraded with Apply To Specific Color for you to animate borders.
 * *scan_line.shader*&mdash;An effect that creates old style tv scan lines, for glitch style effects. 
 * *selective_color.shader*&mdash;Create black and white effects with some colorization. (defaults: .4,.03,.25,.25, 5.0, true,true, true, true. cuttoff higher = less color, 0 = all 1 = none)
