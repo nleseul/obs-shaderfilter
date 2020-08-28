@@ -11,6 +11,8 @@ uniform int pulse_speed = 0;
 uniform bool ease;
 uniform bool rotate_colors;
 uniform bool Apply_To_Alpha_Layer = true;
+uniform bool Apply_To_Specific_Color;
+uniform float4 Color_To_Replace;
 uniform bool horizontal;
 uniform bool vertical;
 uniform int gradient_center_width_percentage = 50;
@@ -124,6 +126,12 @@ float4 mainImage(VertData v_in) : TARGET
 		col.a = clamp(alpha, 0.0, 1.0);
 		if (Apply_To_Alpha_Layer == false)
 			color.a = alpha;
+        if (Apply_To_Specific_Color)
+        {
+            col.a = alpha;
+            float4 original_color = image.Sample(textureSampler, v_in.uv);
+            col.rgb = (distance(color.rgb, Color_To_Replace.rgb) <= 0.075) ? col.rgb : original_color.rgb;
+        }
 		//	result = float4(redness, greenness,blueness,1);
 		//color *= float4(col.r, col.g, col.b, clamp(dot(color, luminance)* alpha, 0.0, 1.0));
 		//color.rgb += col * alpha;
@@ -131,6 +139,7 @@ float4 mainImage(VertData v_in) : TARGET
 		///color.rgb *= (color.rgb * clamp(1.0- alpha, 0.0, 1.0)) + (col.rgb * clamp(alpha, 0.0, 1.0));
 		//color = float4(max(color.r, col.r), max(color.g, col.g), max(color.b, col.b), clamp(dot(color, luminance) * alpha, 0.0, 1.0));
 		color.rgb = lerp(color.rgb, col.rgb, clamp(alpha, 0.0, 1.0));
+
 	}
 	return color;
 

@@ -11,6 +11,10 @@ uniform float color_drift_speed;// (amount, speed)
 uniform int pulse_speed_percent = 0;
 uniform int alpha_percent = 100;
 uniform bool rotate_colors;
+uniform bool Apply_To_Alpha_Layer = false;
+uniform bool Replace_Image_Color;
+uniform bool Apply_To_Specific_Color;
+uniform float4 Color_To_Replace;
 uniform string notes ="play with settings!";
 
 
@@ -61,5 +65,24 @@ float4 mainImage(VertData v_in) : TARGET
 		
 	}
 
-	return float4(src1.x, src2.x, src1.y, alpha);
+    float4 color = rgba;
+    float4 original_color = color;
+    rgba = float4(src1.x, src2.x, src1.y, alpha);
+
+    if (Apply_To_Alpha_Layer)
+    {
+        float4 luma = dot(color, float4(0.30, 0.59, 0.11, 1.0));
+        if (Replace_Image_Color)
+            color = luma;
+        rgba = lerp(original_color, rgba * color, alpha);
+    }
+	
+    if (Apply_To_Specific_Color)
+    {
+        color = original_color;
+        color = (distance(color.rgb, Color_To_Replace.rgb) <= 0.075) ? rgba : color;
+        rgba = lerp(original_color, color, alpha);
+    }
+	
+    return rgba;
 }

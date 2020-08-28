@@ -1,4 +1,4 @@
-# obs-shaderfilter 1.11
+# obs-shaderfilter 1.21
 
 ## Introduction
 
@@ -51,7 +51,7 @@ that need to render outside the bounds of the original source.
 
 Normally, all that's required for OBS purposes is a pixel shader, so the plugin will wrap your shader text with a 
 standard template to add a basic vertex shader and other boilerplate. If you wish to customize the vertex shader
-or other parts of the effect for some reason, you can check the "Override entire effect" option. 
+or other parts of the effect for some reason, you can check the "Use Effect File (.effect)" option. 
 
 Any parameters you add to your shader (defined as `uniform` variables) will be detected by the plugin and exposed
 in the properties window to have their values set. Currently, only `int`, `float`, `bool`, `string`, `texture2d`, and `float4`
@@ -77,8 +77,12 @@ handle these variables being missing, but the shader may malfunction.)
 * **`image`** (`texture2d`)&mdash;The image to which the filter is being applied, either the original output of 
   the source or the output of the previous filter in the chain. (Standard for all OBS filters.)
 * **`elapsed_time`** (`float`)&mdash;The time in seconds which has elapsed since the filter was created. Useful for 
-  creating animations. 
-* **`rand_f`** (`float`)&mdash; a random float between 0 and 1. 
+  creating animations.
+* **`local_time`** (`float`)&mdash; a random float representing the local time.(1.2)
+* **`loops`** (`int`)&mdash; count of how many loops times the shader has rendered a page.(1.2)
+* **`rand_f`** (`float`)&mdash; a random float between 0 and 1. changes per frame.
+* **`rand_activation_f`** (`float`)&mdash; a random float between 0 and 1. changes per activation, load or change of settings.(1.2)
+* **`rand_instance_f`** (`float`)&mdash; a random float between 0 and 1. changes per instance on load.(1.2)
 * **`uv_offset`** (`float2`)&mdash;The offset which should be applied to the UV coordinates of the vertices. This is
   used in the standard vertex shader to draw extra pixels on the borders of the source.
 * **`uv_scale`** (`float2`)&mdash;The scale which should be applied to the UV coordinates of the vertices. This is 
@@ -89,42 +93,53 @@ handle these variables being missing, but the shader may malfunction.)
   texture, or otherwise scale UV coordinate distances into texel distances.
 
 ### New Options in version 1.1+
-* *Use Slider Inputs&mdash; Converts Integer and floating point inputs into sliders in the UI.
-* *Use Shader Time&mdash;Start the effect from the loadtime of the shader, not the start up time of OBS Studio.
+* **`Use Slider Inputs`**&mdash; Converts Integer and floating point inputs into sliders in the UI.
+* **`Use Shader Time`**&mdash;Start the effect from the loadtime of the shader, not the start up time of OBS Studio.
+* **`Override Entire Effect`** renamed **`Use Effect File (.effect)`** in UI and documentation
+* Textures moved from the shaders folder to the textures folder. Existing textures are not deleted so as to not disrupt you current scenes.(1.2)
+* 1.21 minor bug fixes and shader/effect updates
   
 ### Example shaders
 
 Several examples are provided in the plugin's *data/examples* folder. These can be used as-is for some hopefully
 useful common tasks, or used as a reference in developing your own shaders. Note that the *.shader* and *.effect* 
 extensions are for clarity only, and have no specific meaning to the plugin. Text files with any extension can be
-loaded. 
+loaded. In a standard, *.effect* files include a vertex shader and *.shader* only has a pixel shader.
 
-I recommend *.shader* as they do not require `override_entire_effect` as pixel shaders, while *.effect* signifies vertex shaders with `override_entire_effect` required.
+I recommend *.shader* as they do not require `Use Effect File (.effect)` as pixel shaders, while *.effect* signifies vertex shaders with `Use Effect File (.effect)` required.
 
 * *animated_texture.effect*&mdash; Animates a texture with polar sizing and color options
+* *ascii.shader*&mdash; a little example of ascii art
 * *background_removal.effect*&mdash; simple implementation of background removal. Optional color space corrections
 * *blink.shader*&mdash;A shader that fades the opacity of the output in and out over time, with a configurable speed
   multiplier. Demonstrates the user of the `elapsed_time` parameter.
 * *bloom.shader / glow.shader*&mdash; simple shaders to add glow or bloom effects, the glow shader has some additional options for animation
-* *cartoon.effect* (Overrides entire effect)&mdash; Simple Cartooning based on hue and steps of detail value.
+* *cartoon.effect* (Use Effect File (.effect))&mdash; Simple Cartooning based on hue and steps of detail value.
 * *border.shader*&mdash;A shader that adds a solid border to all extra pixels outside the bounds of the input. 
 * *drop_shadow.shader*&mdash;A shader that adds a basic drop shadow to the input. Note that this is done with a simple
   uniform blur, so it won't look quite as good as a proper Gaussian blur. This is also an O(N&sup2;) blur on the size 
   of the blur, so be very conscious of your GPU usage with a large blur size.
 * *edge_detection.shader*&mdash;A shader that detects edges of color. Includes support for alpha channels.   
-* *filter_template.effect* (Overrides entire effect)&mdash;A copy of the default effect used by the plugin, which simply
+* *filter_template.effect* (Use Effect File (.effect))&mdash;A copy of the default effect used by the plugin, which simply
   renders the input directly to the output after scaling UVs to reflect any extra border pixels. This is useful as a starting
   point for developing new effects, especially those that might need a custom vertex shader. (Note that modifying this file will
   not affect the internal effect template used by the plugin.)
+* *filter_template.shader* &mdash;A copy of the default shader used by the plugin, which simply
+  renders the input directly to the output after scaling UVs to reflect any extra border pixels. This is useful as a starting
+  point for developing new pixel shaders. (Note that modifying this file will not affect the internal effect template used by the plugin.)
+* *fire.shader*&mdash; A fire example converted from shadertoy with lots of added options.[youtube example](https://youtu.be/jcTsC0zSNAs)
 * *gradient.shader*&mdash; This shader has a little brother *simple_gradient.shader*, but lets you choose three colors and animate gradients.
 * *glitch_analog.shader*&mdash;A shader that creates glitch effects similar to analog signal issues. Includes support for alpha channel.   
 * *hexagon.shader*&mdash;A shader that creates a grid of hexagons with several options for you to set. This is an example of making shapes.
+* *gaussian-simple.shader*&mdash; A simple gaussian shader for bluring. Really implements closer to a box shader. 
 * *luminance.shader*&mdash;A shader that adds an alpha layer based on brightness instead of color. Extremely useful for making live 
   video special effects, like replacing backgrounds or foregrounds.
+* *matrix.effect*&mdash; The cat is a glitch conversion from shadertoy. Updated with several configurable options.(1.2)
 * *multiply.shader*&mdash;A shader that multiplies the input by another image specified in the parameters. Demonstrates the use 
   of user-defined `texture2d` parameters.
-* *perlin_noise.effect* (Overrides entire effect)&mdash;An effect generates perlin_noise, used to make water, clouds and glitch effects. 
-* *pulse.effect* (Overrides entire effect)&mdash;An effect that varies the size of the output over time. This demonstrates 
+* *night_sky.shader*&mdash; Animated moon, clouds, stars background(1.2)
+* *perlin_noise.effect* (Use Effect File (.effect))&mdash;An effect generates perlin_noise, used to make water, clouds and glitch effects. 
+* *pulse.effect* (Use Effect File (.effect))&mdash;An effect that varies the size of the output over time. This demonstrates 
   a custom vertex shader that manipulates the position of the rendered vertices based on user data. Note that moving the vertices 
   in the vertex shader will not affect the logical size of the source in OBS, and this may mean that pixels outside the source's
   bounds will get cut off by later filters in the filter chain.
@@ -134,14 +149,18 @@ I recommend *.shader* as they do not require `override_entire_effect` as pixel s
   Pixels inside the bounds of the input are treated as solid; pixels outside are treated as opaque. The complexity of the blur
   does not increase with its size, so you should be able to make your blur size as large as you like wtihout affecting
   GPU load. 
-* *repeat.effect* (Overrides entire effect)&mdash;Duplicates the input video as many times as you like and organizes on the screen.
+* *remove_partial_pixels.shader*&mdash;A shader that removes pixels with partial alpha, excellent for cleaning up green screens.
+* *repeat.effect* (Use Effect File (.effect))&mdash;Duplicates the input video as many times as you like and organizes on the screen.
+* *repeat_texture.effect* (Use Effect File (.effect))&mdash; As above, but add a texture input to repeat instead of the input source.
 * *rgb_color_wheel.shader&mdash;A rotatable RGB color wheel!
-* *rotatoe.effect* (Overrides entire effect)&mdash;A test rotation effect
+* *rotatoe.effect* (Use Effect File (.effect))&mdash;A test rotation effect
 * *rounded_rect.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded 
   edges.
+* *rounded_stroke.shader*&mdash;A shader that rounds the corners of the input, optionally adding a border outside the rounded [https://youtu.be/J8mQIEKvWt0](https://youtu.be/J8mQIEKvWt0)
+  edges. Updated by Exeldro. Several shaders have been upgraded with Apply To Specific Color for you to animate borders.
 * *scan_line.shader*&mdash;An effect that creates old style tv scan lines, for glitch style effects. 
 * *selective_color.shader*&mdash;Create black and white effects with some colorization. (defaults: .4,.03,.25,.25, 5.0, true,true, true, true. cuttoff higher = less color, 0 = all 1 = none)
-* *shake.effect* (Overrides entire effect)&mdash;creates random screen glitch style shake. Keep the random_scale low for small (0.2-1) for small
+* *shake.effect* (Use Effect File (.effect))&mdash;creates random screen glitch style shake. Keep the random_scale low for small (0.2-1) for small
   jerky movements and larger for less often big jumps.
 * *spotlight.shader*&mdash;Creates a stationary or animated spotlight effect with color options, speed of animation and glitch
 * *shine.shader*&mdash;Add shine / glow to any element, use the transition luma wipes (obs-studio\plugins\obs-transitions\data\luma_wipes *SOME NEW WIPES INCLUDED IN THIS RELEASE ZIP*) or create your own, 
@@ -151,7 +170,7 @@ I recommend *.shader* as they do not require `override_entire_effect` as pixel s
     suggested default settings is opacity 0.5, innerRadius = 0.5, outerRadius = 1.2
 * *zoom_blur.shader*&mdash;A shader that creates a zoom with blur effect based on a number of samples and magnitude of each sample. It also includes
    an animation with or without easing and a glitch option. Set speed to zero to not use animation. Suggested values are 15 samples and 30-50 magnitude.
-* *other*&mdash; I have far too many shaders to list. Please check [Examples folder](https://github.com/Oncorporation/obs-shaderfilter/tree/master/data/examples)
+* *other*&mdash; We have far too many shaders to list. Please check [Examples folder](https://github.com/Oncorporation/obs-shaderfilter/tree/master/data/examples)
    or find me on discord, as I have many additional filters for fixing input problems. 
 
 ## Building
@@ -180,5 +199,5 @@ mess to deal with and I don't like it.
 
 ## Donations
 
-I appreciate donations on twitch.tv/surn , [Bitcoin](bitcoin:3HAN6eVxv81URgj51wxeCd9eMhg3tvriro) or [LiteCoin](litecoin:MQFVTFCZUtcucZJzQCyiSDTirrWGqTyCjM).
-Why Crypto? You do not have free speech when you live in fear of everything being taken away on an authoritarian whim, a criminal plot or by a outraged mob.
+I appreciate donations/follows/subs on twitch.tv/surn , [Bitcoin](bitcoin:3HAN6eVxv81URgj51wxeCd9eMhg3tvriro) or [LiteCoin](litecoin:MQFVTFCZUtcucZJzQCyiSDTirrWGqTyCjM).
+Why Crypto? We do not have free speech when we live in fear of everything being taken away on an authoritarian whim, a criminal plot or an outraged mob?

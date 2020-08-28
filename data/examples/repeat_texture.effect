@@ -17,6 +17,7 @@ uniform float rand_f;
 uniform float blend = 1.0;
 uniform float copies = 4.0;
 uniform string notes = 'copies, use a number that has a square root. Blend adjusts the ratio of source and texture';
+uniform float alpha_percentage = 100.0;
 
 sampler_state tex_sampler {
 	Filter   = Linear;
@@ -33,6 +34,7 @@ sampler_state base_sampler {
 struct VertIn {
 	float4 pos : POSITION;
 	float2 uv_0  : TEXCOORD0;
+	float2 uv_1  : TEXCOORD1;
 };
 
 struct VertOut {
@@ -52,7 +54,7 @@ VertOut VSDefault(VertIn vert_in)
 
 float4 PSDrawBare(VertOut vert_in) : TARGET
 {
-
+	float alpha = clamp(alpha_percentage * 0.01 ,-1.0,2.0);
     float4 tex = tex_image.Sample(tex_sampler, vert_in.uv_0);
     float4 base = image.Sample(base_sampler, vert_in.uv_1);
 
