@@ -1,4 +1,4 @@
-//My effect modified by Me for use with obs-shaderfilter month/year v.01
+//My effect modified by Me for use with obs-shaderfilter month/year v.02
 uniform float4x4 ViewProj;
 uniform texture2d image;
 
@@ -14,7 +14,7 @@ uniform texture2d image;
 #define mat4 float4x4
 #define fract frac
 #define mix lerp
-#define iTime float
+
 
 uniform float elapsed_time;
 uniform float2 uv_offset;
@@ -27,6 +27,9 @@ uniform float rand_activation_f;
 uniform int loops;
 uniform float local_time;
 uniform string notes = "add notes here";
+
+#define iTime elapsed_time
+#define iResolution uv_size
 
 sampler_state textureSampler {
 	Filter    = Linear;

@@ -1,4 +1,4 @@
-//My shader modified by Me for use with obs-shaderfilter month/year v.01
+//My shader modified by Me for use with obs-shaderfilter month/year v.02
 
 //Section to converting GLSL to HLSL - can delete if unneeded
 #define vec2 float2
@@ -13,6 +13,8 @@
 #define fract frac
 #define mix lerp
 #define iTime float
+#define iTime elapsed_time
+#define iResolution uv_size
 
 /*
 **Shaders have these variables pre loaded by the plugin**
