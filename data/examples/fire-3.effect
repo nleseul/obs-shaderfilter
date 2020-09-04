@@ -1,0 +1,124 @@
+//My effect modified by Me for use with obs-shaderfilter month/year v.02
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+//Section to converting GLSL to HLSL - can delete
+#define vec2 float2
+#define vec3 float3
+#define vec4 float4
+#define ivec2 int2
+#define ivec3 int3
+#define ivec4 int4
+#define mat2 float2x2
+#define mat3 float3x3
+#define mat4 float4x4
+#define fract frac
+#define mix lerp
+
+
+uniform float elapsed_time;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
+uniform float2 uv_pixel_interval;
+uniform float2 uv_size;
+uniform float rand_f;
+uniform float rand_instance_f;
+uniform float rand_activation_f;
+uniform int loops;
+uniform float local_time;
+uniform string notes = "add notes here";
+
+#define iTime elapsed_time
+#define iResolution uv_size
+
+uniform int Alpha_Percentage = 90; //<Range(0.0,100.0)>
+uniform int Speed = 100;
+uniform bool Invert <
+	string name = "Invert";
+> = false;
+uniform float lumaMin = 0.01;
+uniform float lumaMinSmooth = 0.04;
+uniform bool Apply_To_Image;
+uniform bool Replace_Image_Color;
+
+sampler_state textureSampler {
+	Filter    = Linear;
+	AddressU  = Border;
+	AddressV  = Border;
+	BorderColor = 00000000;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+VertData mainTransform(VertData v_in)
+{
+	VertData vert_out;
+	vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+	float2 uv = v_in.uv;
+	if(Invert)
+		uv = 1.0 - v_in.uv;	
+	vert_out.uv  = v_in.uv * uv_scale + uv_offset;
+	return vert_out;
+}
+
+int2 iMouse()
+{
+	return int2(mouse.x * ViewSize.x, mouse.y * ViewSize.y);
+}
+
+float mod(float x, float y)
+{
+	return x - y * floor(x / y);
+}
+
+float2 mod2(float2 x, float2 y)
+{
+	return x - y * floor(x / y);
+}
+
+/*ps start*/
+uniform bool Burner = false;
+
+uniform float Flame_Size = 110.0;
+
+uniform float Spark_Grid_Height = 50.0;
+
+uniform float Flame_Modifier  = 1.0;
+
+uniform float Flame_Tongue_Size = 0.02;
+
+
+float4 mainImage(VertData v_in) : TARGET
+{
+	return image.Sample(textureSampler, v_in.uv);
+
+	if (Apply_To_Image)
+    {
+        float4 color = image.Sample(textureSampler, v_in.uv);
+        float4 original_color = color;
+        if (color.a > 0.0)
+        {    
+            float4 luma = dot(color, float4(0.30, 0.59, 0.11, color.a));
+            if (Replace_Image_Color)
+                color = luma;            
+            rgba = lerp(original_color, lerp(original_color,rgba * color,rgba.a), alpha);
+        }
+        else
+        {
+            rgba = color;
+        }
+		
+    }
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = mainTransform(v_in);
+		pixel_shader  = mainImage(v_in);
+	}
+}
