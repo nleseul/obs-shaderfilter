@@ -12,9 +12,8 @@
 #define mat4 float4x4
 #define fract frac
 #define mix lerp
-#define iTime float
 #define iTime elapsed_time
-#define iResolution uv_size
+#define iResolution uv_scale
 
 /*
 **Shaders have these variables pre loaded by the plugin**

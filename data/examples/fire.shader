@@ -216,7 +216,7 @@ float4 mainImage(VertData v_in) : TARGET
         color = image.Sample(textureSampler, v_in.uv);
         original_color = color;
         color = (distance(color.rgb, Color_To_Replace.rgb) <= 0.075) ? rgba : color;
-        rgba = lerp(original_color, color, clamp(Alpha_Percentage * .01, 0, 1.0));
+        rgba = lerp(original_color, color, alpha);
     }
     return rgba;
 }
