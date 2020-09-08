@@ -28,18 +28,22 @@ uniform int loops;
 uniform float local_time;
 uniform string notes = "add notes here";
 
+uniform float Movement_Direction_Horizontal = 0.0;
+uniform float Movement_Direction_Vertical = 0.0;
+
 #define iTime elapsed_time
 #define iResolution uv_scale
+#define Movement_Direction float2(Movement_Direction_Horizontal, Movement_Direction_Vertical)
 
 uniform int Alpha_Percentage = 90; //<Range(0.0,100.0)>
-uniform int Speed = 50;
+uniform int Speed = 80;
 uniform bool Invert = false;
 uniform float lumaMin = 0.01;
 uniform float lumaMinSmooth = 0.04;
-uniform bool Apply_To_Image;
-uniform bool Replace_Image_Color;
+uniform bool Apply_To_Image = true;
+uniform bool Replace_Image_Color = true;
 uniform float4 Color_To_Replace;
-uniform bool Apply_To_Specific_Color;
+uniform bool Apply_To_Specific_Color = false;
 
 sampler_state textureSampler {
 	Filter    = Linear;
@@ -64,12 +68,11 @@ VertData mainTransform(VertData v_in)
 	return vert_out;
 }
 
-uniform float2 mouse = { 0., 0. };
-
 int2 iMouse()
 {
-    return int2(mouse.x * uv_size.x, mouse.y * uv_size.y);
+    return int2(Movement_Direction.x * uv_size.x, Movement_Direction.y * uv_size.y);
 }
+
 
 float mod(float x, float y)
 {
@@ -85,14 +88,24 @@ float2 mod2(float2 x, float2 y)
 #define PI 3.1415926535897932384626433832795
 uniform bool Full_Width = false;
 
-uniform float Flame_Size = 1.1;
+uniform float Flame_Size = 0.8;
 
-uniform float Spark_Grid_Height = 50.0;
+uniform float Spark_Grid_Height = 0.02;
 
 uniform float Flame_Modifier  = 1.0;
 
-uniform float Flame_Tongue_Size = 0.02;
+uniform float Flame_Tongue_Size = 8.5;
 
+//
+// Description : Array and textureless GLSL 2D/3D/4D simplex 
+//							 noise functions.
+//			Author : Ian McEwan, Ashima Arts.
+//	Maintainer : ijm
+//		 Lastmod : 20110822 (ijm)
+//		 License : Copyright (C) 2011 Ashima Arts. All rights reserved.
+//							 Distributed under the MIT License. See LICENSE file.
+//							 https://github.com/ashima/webgl-noise
+// 
 
 vec3 mod2893(vec3 x)
 {
@@ -236,33 +249,38 @@ vec2 noiseStackUV(vec3 pos, int octaves, float falloff, float diff)
 
 float4 mainImage(VertData v_in) : TARGET
 {
+    float2 UV = (1.0 - v_in.uv) * uv_scale;
+    if (Invert)
+        UV = v_in.uv * uv_scale;
     float alpha = saturate((float) Alpha_Percentage * .01);
     float flame_size = clamp(Flame_Size * .01, 0.0, 4.0);
-    vec2 resolution = iResolution.xy;
+    
+    vec2 resolution = iResolution;
     if (Full_Width)
     {
-        resolution = -1.0 + 2.0 * (iResolution.xy) / 1.0; //iResolution.xy;
+        resolution = (2.0 * (UV.xy)) / 1.0; //iResolution.xy;
+       
     }
     resolution.x = mul(resolution.x, 1 / 1);
-    float time = iTime;
+    float time = iTime * (Speed * 0.01);
 	vec2 drag = iMouse().xy;
 	vec2 offset = iMouse().xy;
 	//
-    float xpart = v_in.uv.x / resolution.x;
-    float ypart = v_in.uv.y / resolution.y;
+    float xpart = UV.x / resolution.x;
+    float ypart = UV.y / resolution.y;
 	//
 	
-    float ypartClip = v_in.uv.y / ( flame_size * 75.0);
+    float ypartClip = UV.y / ( flame_size * 75.0);
     float ypartClippedFalloff = clamp(2.0 - ypartClip, 0.0, 1.0);
     float ypartClipped = min(ypartClip, 1.0);
     float ypartClippedn = (1 - ypartClipped);
 	//
     float xfuel = pow(1.0 - abs(2.0 * xpart - 1.0), 0.5); //pow(1.0-abs(2.0*xpart-1.0),0.5);
 	//
-    float timeSpeed = Speed * 0.01;
+    float timeSpeed = 0.5 * (Speed * 0.01);
     float realTime = -1.0 * timeSpeed * time;
 	//
-	vec2 coordScaled = -1 * Flame_Tongue_Size * v_in.uv - 0.02 * offset;
+	vec2 coordScaled = -1 * Flame_Tongue_Size * UV - 0.02 * offset;
 	vec3 position = vec3(coordScaled, 0.0); //  +vec3(1223.0, 6434.0, 8425.0);
 	vec3 flow = vec3(4.1 * (0.5 - xpart) * pow(ypartClippedn, 4.0), -2.0 * xfuel * pow(ypartClippedn, 64.0), 0.0);
 	vec3 timing = realTime * vec3(0.0, -1.7, 1.1) + flow;
@@ -285,15 +303,15 @@ float4 mainImage(VertData v_in) : TARGET
 	vec3 smoke = vec3(smokePart, smokePart, smokePart);
 	//
 	// sparks
-    float sparkGridSize = Spark_Grid_Height ;
-	vec2 sparkCoord = v_in.uv - vec2(2.0 * offset.x, 190.0 * sin(realTime));
+    float sparkGridSize = Spark_Grid_Height * .01 ;
+	vec2 sparkCoord = UV - vec2(2.0 * offset.x, 19.0 * sin(realTime));
     sparkCoord -= 30.0 * noiseStackUV(0.01 * vec3(sparkCoord, 30.0 * time), 1, 0.4, 0.1);
     sparkCoord += 100.0 * flow.xy;
     if (mod(sparkCoord.y / sparkGridSize, 2.0) < 1.0)
         sparkCoord.x += 0.5 * sparkGridSize;
 	vec2 sparkGridIndex = vec2(floor(sparkCoord / sparkGridSize));
     float sparkRandom = prng(sparkGridIndex);
-    float sparkLife = min(10.0 * (1.0 - min((sparkGridIndex.y + (190.0 * realTime / sparkGridSize)) / (24.0 - 20.0 * sparkRandom), 1.0)), 1.0);
+    float sparkLife = min(10.0 * (1.0 - min((sparkGridIndex.y + (19.0 * realTime / sparkGridSize)) / (24.0 - 20.0 * sparkRandom), 1.0)), 1.0);
 	vec3 sparks = vec3(0.0, 0.0, 0.0);
     if (sparkLife > 0.0)
     {
@@ -308,6 +326,11 @@ float4 mainImage(VertData v_in) : TARGET
     }
 	//
     float4 rgba = vec4(max(fire, sparks) + smoke, 1.0);
+    
+    // remove dark areas per user
+    float luma_fire = dot(rgba.rgb, float3(0.299, 0.587, 0.114));
+    float luma_min_fire = smoothstep(lumaMin, lumaMin + lumaMinSmooth, luma_fire);
+    rgba.a = clamp(luma_min_fire, 0.0, alpha);
 	
     float4 color;
     float4 original_color;

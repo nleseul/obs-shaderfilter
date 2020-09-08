@@ -31,19 +31,6 @@ uniform string notes = "luma is applied with Apply to Alpha Layer. Movement Spee
 #define iTime elapsed_time
 #define iResolution uv_size
 
-uniform float2 mouse<
-	string name = "Virtual Mouse Coordinates";
-	string field_type = "slider";
-	float2 minimum = {0, 0};
-	float2 maximum = {100., 100.};
-	float2 scale = {.01, .01};
-	float2 step = {.01, .01};
-> = {0., 0.};
-
-int2 iMouse() {
-	return int2(mouse.x * uv_size.x, mouse.y * uv_size.y);
-}
-
 sampler_state textureSampler {
 	Filter    = Linear;
 	AddressU  = Clamp;
