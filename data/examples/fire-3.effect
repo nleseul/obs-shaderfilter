@@ -32,7 +32,7 @@ uniform float Movement_Direction_Horizontal = 0.0;
 uniform float Movement_Direction_Vertical = 0.0;
 
 #define iTime elapsed_time
-#define iResolution uv_scale
+#define iResolution float4(uv_size,uv_pixel_interval)
 #define Movement_Direction float2(Movement_Direction_Horizontal, Movement_Direction_Vertical)
 
 uniform int Alpha_Percentage = 90; //<Range(0.0,100.0)>
@@ -255,7 +255,7 @@ float4 mainImage(VertData v_in) : TARGET
     float alpha = saturate((float) Alpha_Percentage * .01);
     float flame_size = clamp(Flame_Size * .01, 0.0, 4.0);
     
-    vec2 resolution = iResolution;
+    vec2 resolution = iResolution.xy;
     if (Full_Width)
     {
         resolution = (2.0 * (UV.xy)) / 1.0; //iResolution.xy;
@@ -303,15 +303,15 @@ float4 mainImage(VertData v_in) : TARGET
 	vec3 smoke = vec3(smokePart, smokePart, smokePart);
 	//
 	// sparks
-    float sparkGridSize = Spark_Grid_Height * .01 ;
-	vec2 sparkCoord = UV - vec2(2.0 * offset.x, 19.0 * sin(realTime));
-    sparkCoord -= 30.0 * noiseStackUV(0.01 * vec3(sparkCoord, 30.0 * time), 1, 0.4, 0.1);
+    float sparkGridSize = Spark_Grid_Height *.01;
+	vec2 sparkCoord = UV - vec2(2.0 * offset.x, 190.0 * sin(realTime));
+    sparkCoord -= 30.0 * noiseStackUV(0.01 * vec3(sparkCoord, 15.0 * time), 1, 0.4, 0.1);
     sparkCoord += 100.0 * flow.xy;
     if (mod(sparkCoord.y / sparkGridSize, 2.0) < 1.0)
         sparkCoord.x += 0.5 * sparkGridSize;
 	vec2 sparkGridIndex = vec2(floor(sparkCoord / sparkGridSize));
-    float sparkRandom = prng(sparkGridIndex);
-    float sparkLife = min(10.0 * (1.0 - min((sparkGridIndex.y + (19.0 * realTime / sparkGridSize)) / (24.0 - 20.0 * sparkRandom), 1.0)), 1.0);
+    float sparkRandom = prng( sparkGridIndex);
+    float sparkLife = min(10.0 * (1.0 - min((sparkGridIndex.y + (190.0 * realTime / sparkGridSize)) / (24.0 - 20.0 * sparkRandom), 1.0)), 1.0);
 	vec3 sparks = vec3(0.0, 0.0, 0.0);
     if (sparkLife > 0.0)
     {

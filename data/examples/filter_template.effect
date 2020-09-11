@@ -29,7 +29,7 @@ uniform float local_time;
 uniform string notes = "add notes here";
 
 #define iTime elapsed_time
-#define iResolution uv_scale
+#define iResolution float4(uv_size,uv_pixel_interval)
 
 sampler_state textureSampler {
 	Filter    = Linear;
