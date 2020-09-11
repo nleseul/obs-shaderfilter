@@ -88,9 +88,9 @@ float2 mod2(float2 x, float2 y)
 #define PI 3.1415926535897932384626433832795
 uniform bool Full_Width = false;
 
-uniform float Flame_Size = 0.8;
+uniform float Flame_Size = 1.0;
 
-uniform float Spark_Grid_Height = 0.02;
+uniform float Spark_Grid_Height = 50;
 
 uniform float Flame_Modifier  = 1.0;
 
@@ -255,7 +255,7 @@ float4 mainImage(VertData v_in) : TARGET
     float alpha = saturate((float) Alpha_Percentage * .01);
     float flame_size = clamp(Flame_Size * .01, 0.0, 4.0);
     
-    vec2 resolution = iResolution.xy;
+    vec2 resolution = (.25 * uv_scale * UV.xy) + (0.75 * uv_scale);
     if (Full_Width)
     {
         resolution = (2.0 * (UV.xy)) / 1.0; //iResolution.xy;
@@ -263,7 +263,7 @@ float4 mainImage(VertData v_in) : TARGET
     }
     resolution.x = mul(resolution.x, 1 / 1);
     float time = iTime * (Speed * 0.01);
-	vec2 drag = iMouse().xy;
+	//vec2 drag = iMouse().xy;
 	vec2 offset = iMouse().xy;
 	//
     float xpart = UV.x / resolution.x;
@@ -280,7 +280,7 @@ float4 mainImage(VertData v_in) : TARGET
     float timeSpeed = 0.5 * (Speed * 0.01);
     float realTime = -1.0 * timeSpeed * time;
 	//
-	vec2 coordScaled = -1 * Flame_Tongue_Size * UV - 0.02 * offset;
+	vec2 coordScaled = -1 * Flame_Tongue_Size * UV - 0.1 * offset;
 	vec3 position = vec3(coordScaled, 0.0); //  +vec3(1223.0, 6434.0, 8425.0);
 	vec3 flow = vec3(4.1 * (0.5 - xpart) * pow(ypartClippedn, 4.0), -2.0 * xfuel * pow(ypartClippedn, 64.0), 0.0);
 	vec3 timing = realTime * vec3(0.0, -1.7, 1.1) + flow;
@@ -303,8 +303,8 @@ float4 mainImage(VertData v_in) : TARGET
 	vec3 smoke = vec3(smokePart, smokePart, smokePart);
 	//
 	// sparks
-    float sparkGridSize = Spark_Grid_Height *.01;
-	vec2 sparkCoord = UV - vec2(2.0 * offset.x, 190.0 * sin(realTime));
+    float sparkGridSize = Spark_Grid_Height;
+	vec2 sparkCoord = UV *uv_size - vec2(2.0 * offset.x, 190.0 * sin(realTime));
     sparkCoord -= 30.0 * noiseStackUV(0.01 * vec3(sparkCoord, 15.0 * time), 1, 0.4, 0.1);
     sparkCoord += 100.0 * flow.xy;
     if (mod(sparkCoord.y / sparkGridSize, 2.0) < 1.0)
