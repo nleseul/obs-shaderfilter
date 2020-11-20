@@ -67,10 +67,10 @@ float2 invBilinear(float2 p)
     
     float2 res = float2(-1.0, -1.0);
 
-    if(  b1 && !b2 ) res = float2( u1, v1 );
-    if( !b1 &&  b2 ) res = float2( u2, v2 );
-    
-    return res;
+    if( b2 ) return float2( u2, v2 );
+    if( b1 ) return float2( u1, v1 );
+	
+    return float2(-1.0, -1.0);
 }
 
 float4 mainImage(VertData v_in) : TARGET
