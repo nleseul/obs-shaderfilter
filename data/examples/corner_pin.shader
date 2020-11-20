@@ -19,17 +19,17 @@ float cross2d(float2 a, float2 b)
 
 float2 invBilinear(float2 p)
 {
-	float2 a = float2(_TLx / 1000.0, _TLy / 1000.0);
-	float2 b = float2(1.0 - (_TRx / 1000.0), _TRy / 1000.0);
-	float2 c = float2(1.0 - (_DRx / 1000.0), 1.0 - (_DRy / 1000.0));
-	float2 d = float2(_DLx / 1000.0, 1.0 - (_DLy / 1000.0));
+    float2 a = float2(_TLx / 1000.0, _TLy / 1000.0);
+    float2 b = float2(1.0 - (_TRx / 1000.0), _TRy / 1000.0);
+    float2 c = float2(1.0 - (_DRx / 1000.0), 1.0 - (_DRy / 1000.0));
+    float2 d = float2(_DLx / 1000.0, 1.0 - (_DLy / 1000.0));
 	
     float2 e = b-a;
     float2 f = d-a;
     float2 g = a-b+c-d;
     float2 h = p-a;
 	
-	float k2 = cross2d( g, f );
+    float k2 = cross2d( g, f );
     float k1 = cross2d( e, f ) + cross2d( h, g );
     float k0 = cross2d( h, e );
     
@@ -74,6 +74,6 @@ float2 invBilinear(float2 p)
 }
 
 float4 mainImage(VertData v_in) : TARGET
-{	
-	return image.Sample(textureSampler, invBilinear(v_in.uv));
+{
+    return image.Sample(textureSampler, invBilinear(v_in.uv));
 }
