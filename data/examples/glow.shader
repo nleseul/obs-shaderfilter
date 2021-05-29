@@ -3,6 +3,7 @@ uniform int blur = 1;
 uniform int min_brightness= 27;
 uniform int max_brightness = 100;
 uniform int pulse_speed = 0;
+uniform float4 glow_color;
 uniform bool ease;
 uniform string notes = "'ease' - makes the animation pause at the begin and end for a moment,'glow_percent' - how much brightness to add (recommend 0-100). 'blur' - how far should the glow extend (recommend 1-4).'pulse_speed' - (0-100). 'min/max brightness' - floor and ceiling brightness level to target for glows.";
 
@@ -50,10 +51,11 @@ float4 mainImage(VertData v_in) : TARGET
 		for (int n = 0; n < 4; n++) {
 			b = BlurStyler(t, 0, c, d, ease);
 			float4 ncolor = image.Sample(textureSampler, v_in.uv + (blur_amount * b) * offsets[n]);
-			float intensity = dot(ncolor * 1, float3(0.299, 0.587, 0.114));
+			float intensity = dot(ncolor.rgb * 1, float3(0.299, 0.587, 0.114));
 			if ((intensity >= luminance_floor) && (intensity <= luminance_ceiling))
 			{
 				ncolor.a = clamp(ncolor.a * glow_amount, 0.0, 1.0);
+				ncolor.rgb = ncolor.rgb * glow_color.rgb;
 				color += (ncolor * (glow_amount * b));
 			}
 		}
