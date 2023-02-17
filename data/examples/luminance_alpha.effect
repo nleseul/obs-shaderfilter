@@ -1,0 +1,81 @@
+// Luminance Alpha Effect By Charles Fettinger (https://github.com/Oncorporation)  2/2019
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float elapsed_time;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
+uniform float2 uv_pixel_interval;
+uniform float rand_f;
+uniform float2 uv_size;
+
+uniform float4x4 color_matrix;
+uniform float4 color;
+uniform float mul_val = 1.0;
+uniform float add_val = 0.0;
+uniform float level =1.0;
+uniform bool invertAlphaChannel;
+
+sampler_state textureSampler {
+	Filter    = Linear;
+	AddressU  = Border;
+	AddressV  = Border;
+	BorderColor = 00000000;
+};
+
+struct VertDataIn {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+struct VertDataOut {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+	float2 uv2 : TEXCOORD1;
+};
+
+VertDataOut mainTransform(VertDataIn v_in)
+{
+	VertDataOut vert_out;
+	vert_out.pos = mul(float4(v_in.pos.xyz, 1.0 ), ViewProj);
+	vert_out.uv  = v_in.uv * mul_val + add_val;
+	vert_out.uv2 = v_in.uv ;
+	return vert_out;
+}
+
+/*float3 GetLuminance(float4 rgba)
+{
+	float red = rbga.r;
+	float green = rgba.g;
+	float blue = rgba.b;
+	return (.299 * red) + (.587 * green) + (.114 * blue);
+}*/
+
+float4 PSAlphaMaskRGBA(VertDataOut v_in) : TARGET
+{
+	float4 rgba = image.Sample(textureSampler, v_in.uv) ;
+    if (rgba.a > 0.0)
+    {
+    
+    float intensity = dot(rgba * color, float3(0.299, 0.587, 0.114));
+    if (invertAlphaChannel)
+    {
+        intensity = 1.0 - intensity;
+    }
+    rgba *= color;
+    rgba.a = clamp((intensity * level), 0.0, 1.0);
+	
+    }
+	return rgba;
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = mainTransform(v_in);
+		pixel_shader  = PSAlphaMaskRGBA(v_in);
+	}
+}
+

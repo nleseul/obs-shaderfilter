@@ -1,0 +1,193 @@
+// Matrix effect by Charles Fettinger for obs-shaderfilter plugin 7/2020 v.2
+// https://github.com/Oncorporation/obs-shaderfilter
+// https://www.shadertoy.com/view/XljBW3  The cat is a glitch (Matrix) - coverted from and updated
+
+#define vec2 float2
+#define vec3 float3
+#define vec4 float4
+#define ivec2 int2
+#define ivec3 int3
+#define ivec4 int4
+#define mat2 float2x2
+#define mat3 float3x3
+#define mat4 float4x4
+#define fract frac
+#define mix lerp
+#define iTime float
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float elapsed_time;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
+uniform float2 uv_size;
+uniform float2 uv_pixel_interval;
+uniform float rand_f;
+uniform float rand_instance_f;
+uniform float rand_activation_f;
+uniform int loops;
+uniform float local_time;
+
+
+uniform float2 mouse<
+	string name = "Virtual Mouse Coordinates";
+	string field_type = "slider";
+	float2 minimum = {0, 0};
+	float2 maximum = {100., 100.};
+	float2 scale = {.01, .01};
+	float2 step = {.01, .01};
+> = {0., 0.};
+
+
+int2 iMouse() {
+	return int2(mouse.x * uv_size.x, mouse.y * uv_size.y);
+}
+
+sampler_state textureSampler {
+	Filter    = Linear;
+	AddressU  = Clamp;
+	AddressV  = Clamp;
+};
+
+/* ps start
+
+*/
+
+uniform bool Invert_Direction<
+	string name = "Invert Direction";
+> = true;
+
+uniform float lumaMin = 0.01;
+uniform float lumaMinSmooth = 0.01;
+uniform float Ratio = 4.0;
+uniform float Alpha_Percentage = 100; //<Range(0.0,100.0)>
+uniform bool Apply_To_Alpha_Layer = true;
+
+#define PI2 6.28318530718
+#define PI 3.1416
+
+
+float vorocloud(float2 p){
+	float f = 0.0;
+	float flow = 1.0;
+	float time = elapsed_time;
+	if(Invert_Direction){
+		flow *= -1;
+	}
+	/*
+	//periodically stop
+	if (loops % 16 >= 8.0)
+	{
+		time = local_time - elapsed_time;
+	}
+	*/
+		
+	float r = clamp(Ratio,-50,50);
+    float2 pp = cos(float2(p.x * 14.0, (16.0 * p.y + cos(floor(p.x * 30.0)) + flow * time * PI2)) );
+    p = cos(p * 12.1 + pp * r + sin(time/PI)*(r/PI) + 0.5 * cos(pp.x * r + sin(time/PI)*(r/PI)));
+    
+    float2 pts[4];    
+    
+    pts[0] = float2(0.5, 0.6);
+    pts[1] = float2(-0.4, 0.4);
+    pts[2] = float2(0.2, -0.7);
+    pts[3] = float2(-0.3, -0.4);
+    
+    float d = 5.0;
+    
+    for(int i = 0; i < 4; i++){
+      	pts[i].x += 0.03 * cos(float(i)) + p.x;
+      	pts[i].y += 0.03 * sin(float(i)) + p.y;
+    	d = min(d, distance(pts[i], pp));
+    }
+    
+    f = 2.0 * pow(1.0 - 0.3 * d, 13.0);
+    
+    f = min(f, 1.0);
+    
+	return f;
+}
+
+vec4 scene(float2 UV){
+	float alpha = clamp(Alpha_Percentage *.01 ,0,1.0);
+
+	float x = UV.x;
+	float y = UV.y;
+    
+	float2 p = float2(x, y) - 0.5;
+    
+	vec4 col = vec4(0.0,0.0,0.0,0.0);
+	col.g += 0.02;
+    
+	float v = vorocloud(p);
+	v = 0.2 * floor(v * 5.0);
+    
+	col.r += 0.1 * v;
+	col.g += 0.6 * v;
+	col.b += 0.5 * pow(v, 5.0);
+    
+    
+	v = vorocloud(p * 2.0);
+	v = 0.2 * floor(v * 5.0);
+    
+	col.r += 0.1 * v;
+	col.g += 0.2 * v;
+	col.b += 0.01 * pow(v, 5.0);
+    
+	col.a = 1.0;
+	float luma = dot(col.rgb,float3(0.299,0.587,0.114));
+	float luma_min = smoothstep(lumaMin, lumaMin + lumaMinSmooth, luma);
+	col.a = clamp(luma_min,0.0,1.0);
+
+	float4 original_color = image.Sample(textureSampler, UV);
+	
+	// skip if (alpha is zero and only apply to alpha layer is true) 
+	if (!(original_color.a <= 0.0 && Apply_To_Alpha_Layer == true))
+	{
+		if (Apply_To_Alpha_Layer == false)
+			original_color.a = alpha;
+		
+		col.rgb = lerp(original_color.rgb, col.rgb, alpha); //apply alpha slider
+		col = lerp(original_color, col, col.a); //remove black background color
+	}
+	else
+	{
+		col.a = original_color.a;
+	}
+
+	return col;
+}
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+	vec2 uv = fragCoord.xy / uv_size;
+	fragColor = scene(uv);
+}
+
+/*ps end*/
+
+struct VertFragData {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+VertFragData VSDefault(VertFragData vtx) {
+	vtx.pos = mul(float4(vtx.pos.xyz, 1.0), ViewProj);
+	return vtx;
+}
+
+float4 PSDefault(VertFragData vtx) : TARGET {
+	float4 col = float4(1., 1., 1., 1.);
+	mainImage(col, vtx.uv * uv_size);
+	return col;
+}
+
+technique Draw 
+{
+	pass
+	{
+		vertex_shader = VSDefault(vtx);
+		pixel_shader  = PSDefault(vtx); 
+	}
+}

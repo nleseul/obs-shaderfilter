@@ -84,3 +84,6 @@ tags
 .DS_Store
 */.DS_Store
 */**/.DS_Store
+/.vs
+/CMakeLists.txt.bak
+/out/build/

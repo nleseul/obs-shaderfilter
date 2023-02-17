@@ -1,0 +1,99 @@
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float elapsed_time;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
+uniform float2 uv_pixel_interval;
+uniform float rand_f;
+uniform float2 uv_size;
+uniform string notes;
+
+sampler_state textureSampler {
+	Filter    = Linear;
+	AddressU  = Border;
+	AddressV  = Border;
+	BorderColor = 00000000;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+VertData mainTransform(VertData v_in)
+{
+	VertData vert_out;
+	vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+	vert_out.uv = v_in.uv * uv_scale + uv_offset;
+	return vert_out;
+}
+
+uniform int shadow_offset_x;
+uniform int shadow_offset_y;
+uniform int shadow_blur_size;
+
+uniform float4 shadow_color;
+
+uniform bool is_alpha_premultiplied;
+
+float4 mainImage(VertData v_in) : TARGET
+{
+    int shadow_blur_samples = shadow_blur_size + 1;//pow(shadow_blur_size * 2 + 1, 2);
+    
+    float4 color = image.Sample(textureSampler, v_in.uv);
+    float2 shadow_uv = float2(v_in.uv.x - uv_pixel_interval.x * shadow_offset_x, 
+                              v_in.uv.y - uv_pixel_interval.y * shadow_offset_y);
+    
+    float sampled_shadow_alpha = 0;
+    
+    for (int blur_x = -shadow_blur_size; blur_x <= shadow_blur_size; blur_x++)
+    {
+		float2 blur_uv = shadow_uv + float2(uv_pixel_interval.x * blur_x, 0);
+		sampled_shadow_alpha += image.Sample(textureSampler, blur_uv).a;
+    }
+	
+	sampled_shadow_alpha /= shadow_blur_samples;
+    
+    float4 final_shadow_color = float4(shadow_color.rgb, shadow_color.a * sampled_shadow_alpha);
+    
+    return final_shadow_color * (1-color.a) + color * (is_alpha_premultiplied * 1 + !is_alpha_premultiplied * color.a);
+}
+
+float4 mainImage_2_end(VertData v_in) : TARGET
+{
+    int shadow_blur_samples = shadow_blur_size + 1;//pow(shadow_blur_size * 2 + 1, 2);
+    
+    float4 color = image.Sample(textureSampler, v_in.uv);
+    float2 shadow_uv = float2(v_in.uv.x - uv_pixel_interval.x * shadow_offset_x, 
+                              v_in.uv.y - uv_pixel_interval.y * shadow_offset_y);
+    
+    float sampled_shadow_alpha = 0;
+    
+    for (int blur_y = -shadow_blur_size; blur_y <= shadow_blur_size; blur_y++)
+    {
+		float2 blur_uv = shadow_uv + float2(0, uv_pixel_interval.y * blur_y);
+		sampled_shadow_alpha += image.Sample(textureSampler, blur_uv).a;
+    }
+	
+	sampled_shadow_alpha /= shadow_blur_samples;
+    
+    float4 final_shadow_color = float4(shadow_color.rgb, shadow_color.a * sampled_shadow_alpha);
+    
+    return final_shadow_color * (1-color.a) + color * (is_alpha_premultiplied * 1 + !is_alpha_premultiplied * color.a);
+}
+
+technique Draw
+{
+	pass p0
+	{
+		vertex_shader = mainTransform(v_in);
+		pixel_shader = mainImage(v_in);
+	}
+	
+	pass p1
+	{
+		vertex_shader = mainTransform(v_in);
+		pixel_shader = mainImage_2_end(v_in);
+	}
+}

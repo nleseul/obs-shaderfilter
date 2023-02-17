@@ -1,8 +1,6 @@
-//My effect modified by Me for use with obs-shaderfilter month/year v.02
-uniform float4x4 ViewProj;
-uniform texture2d image;
+//My shader modified by Me for use with obs-shaderfilter month/year v.02
 
-//Section to converting GLSL to HLSL - can delete
+//Section to converting GLSL to HLSL - can delete if unneeded
 #define vec2 float2
 #define vec3 float3
 #define vec4 float4
@@ -14,7 +12,21 @@ uniform texture2d image;
 #define mat4 float4x4
 #define fract frac
 #define mix lerp
+#define iTime float
+#define iTime elapsed_time
+#define iResolution float4(uv_size,uv_pixel_interval)
 
+/*
+**Shaders have these variables pre loaded by the plugin**
+**this section can be deleted**
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
 
 uniform float elapsed_time;
 uniform float2 uv_offset;
@@ -26,35 +38,18 @@ uniform float rand_instance_f;
 uniform float rand_activation_f;
 uniform int loops;
 uniform float local_time;
+*/
 uniform string notes = "add notes here";
 
-#define iTime elapsed_time
-#define iResolution float4(uv_size,uv_pixel_interval)
-
-sampler_state textureSampler {
-	Filter    = Linear;
-	AddressU  = Border;
-	AddressV  = Border;
-	BorderColor = 00000000;
-};
-
-struct VertData {
-	float4 pos : POSITION;
-	float2 uv  : TEXCOORD0;
-};
-
-VertData mainTransform(VertData v_in)
-{
-	VertData vert_out;
-	vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
-	vert_out.uv  = v_in.uv * uv_scale + uv_offset;
-	return vert_out;
-}
 
 float4 mainImage(VertData v_in) : TARGET
 {
 	return image.Sample(textureSampler, v_in.uv);
 }
+
+/*
+**Shaders use the built in Draw technique**
+**this section can be deleted**
 
 technique Draw
 {
@@ -64,3 +59,4 @@ technique Draw
 		pixel_shader  = mainImage(v_in);
 	}
 }
+*/

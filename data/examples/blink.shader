@@ -1,4 +1,4 @@
-uniform float speed;
+uniform float speed = 0.5;
 
 float4 mainImage(VertData v_in) : TARGET
 {

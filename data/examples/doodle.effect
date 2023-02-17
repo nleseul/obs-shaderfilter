@@ -1,0 +1,71 @@
+// doodle effect by Charles Fettinger (https://github.com/Oncorporation)  5/2019
+// for use with obs-shaderfilter 1.0
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float elapsed_time;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
+uniform float2 uv_pixel_interval;
+uniform float rand_f;
+uniform float2 uv_size;
+
+uniform float Doodle_Scale_Percent = 2.5;
+uniform float Snap_Percent= 7.5;
+uniform string Notes = "Doodle skews the image by the Scale Percent, Snap Percent controls the number of doodles per second.";
+
+sampler_state textureSampler {
+	Filter    = Linear;
+	AddressU  = Border;
+	AddressV  = Border;
+	BorderColor = 00000000;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+float3 rand3(float3 co)
+{
+	float j = 4096.0*sin(dot(co, float3(17.0, 59.4, 15.0)));
+	float3 result;
+	result.z = frac(512.0*j);
+	j *= .125;
+	result.x = frac(512.0*j);
+	j *= .125;
+	result.y = frac(512.0*j);
+	return result - 0.5;
+}
+
+float snap(float x, float snap)
+{
+	return snap * round(x / max(0.01,snap));
+}
+
+VertData mainTransform(VertData v_in)
+{
+	VertData vert_out;
+	vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+	vert_out.uv = v_in.uv * uv_scale + uv_offset;
+	float time = snap((1 + sin(elapsed_time)) * 0.5, Snap_Percent * .01);
+	float rand = snap(rand_f, Snap_Percent *.01);
+	float2 noise = rand3(v_in.pos.xyz + float3(time,0.0,0.0)).xy * (Doodle_Scale_Percent * .01);
+	vert_out.uv.xy += noise;
+
+	return vert_out;
+}
+
+float4 mainImage(VertData v_in) : TARGET
+{
+	return image.Sample(textureSampler, v_in.uv);
+}
+
+technique Draw
+{
+	pass p0
+	{
+		vertex_shader = mainTransform(v_in);
+		pixel_shader = mainImage(v_in);
+	}
+}

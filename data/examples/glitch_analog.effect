@@ -1,0 +1,116 @@
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float elapsed_time;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
+uniform float2 uv_pixel_interval;
+uniform float rand_f;
+uniform float2 uv_size;
+
+uniform float scan_line_jitter_displacement = 33; // (displacement, threshold)
+uniform int scan_line_jitter_threshold_percent = 95;
+uniform float vertical_jump_amount;
+uniform float vertical_speed;// (amount, speed)
+uniform float horizontal_shake;
+uniform float color_drift_amount;
+uniform float color_drift_speed;// (amount, speed)
+uniform int pulse_speed_percent = 0;
+uniform int alpha_percent = 100;
+uniform bool rotate_colors;
+uniform bool Apply_To_Alpha_Layer = false;
+uniform bool Replace_Image_Color;
+uniform bool Apply_To_Specific_Color;
+uniform float4 Color_To_Replace;
+uniform string notes = "play with settings!";
+
+sampler_state textureSampler {
+	Filter    = Point;
+	AddressU  = Border;
+	AddressV  = Border;
+	BorderColor = 00000000;
+};
+
+struct VertData {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+VertData mainTransform(VertData v_in)
+{
+	VertData vert_out;
+	vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+	vert_out.uv = v_in.uv * uv_scale + uv_offset;
+	return vert_out;
+}
+
+float nrand(float x, float y)
+{
+	float value = dot(float2(x, y), float2(12.9898 , 78.233 ));
+	return frac(sin(value) * 43758.5453);
+}
+
+float4 mainImage(VertData v_in) : TARGET
+{
+    float speed = clamp((float) pulse_speed_percent * 0.01, -10.0, 10);
+    float alpha = clamp((float) alpha_percent * 0.01, 0.0, 1.0);
+	float scan_line_jitter_threshold = (float)scan_line_jitter_threshold_percent * 0.01;
+	float u = v_in.uv.x;
+	float v = v_in.uv.y;
+	float t = sin(elapsed_time * speed) * 2 - 1;
+	float4 rgba = image.Sample(textureSampler, v_in.uv);
+
+	// Scan line jitter
+	float jitter = nrand(v, t) * 2 - 1;
+	jitter *= step(scan_line_jitter_threshold, abs(jitter)) * scan_line_jitter_displacement;
+
+	// Vertical jump
+	float jump = lerp(v, frac(v +  (t * vertical_speed)), vertical_jump_amount);
+
+	// Horizontal shake
+	float shake = ((t * (u + rand_f)/2) - 0.5) * horizontal_shake;
+
+	//// Color drift
+	float drift = sin(jump + color_drift_speed) * color_drift_amount;
+
+	float2 src1 = float2(rgba.x, rgba.z) * clamp(frac(float2(u + jitter + shake, jump)), -10.0, 10.0);
+	float2 src2 = float2(rgba.y, rgba.w) * frac(float2(u + jitter + shake + drift, jump));
+	
+	if(rotate_colors)
+	{
+		src1.x = lerp(src1.x, rgba.x, clamp(1 - sin(elapsed_time * speed),0.0,0.5));
+		src2.x = lerp(src2.x, rgba.y, clamp(sin(elapsed_time * speed),0.0,0.5));
+		src1.y = lerp(src1.y, rgba.z, clamp(1 - sin(elapsed_time * speed),0.0,0.5));
+		
+	}
+	
+    float4 color = rgba;
+    float4 original_color = color;
+	rgba =  float4(src1.x, src2.x, src1.y, alpha);	
+
+    if (Apply_To_Alpha_Layer)
+    {        
+        float4 luma = dot(color, float4(0.30, 0.59, 0.11, 1.0));
+        if (Replace_Image_Color)
+            color = luma;
+        rgba = lerp(original_color, rgba * color, alpha);		
+    }
+	
+    if (Apply_To_Specific_Color)
+    {
+        color = original_color;
+        color = (distance(color.rgb, Color_To_Replace.rgb) <= 0.075) ? rgba : color;
+        rgba = lerp(original_color, color, alpha);
+    }
+	
+    return rgba;
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = mainTransform(v_in);
+		pixel_shader  = mainImage(v_in);
+	}
+}

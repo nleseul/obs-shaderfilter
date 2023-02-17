@@ -1,0 +1,108 @@
+// background removal effect By Charles Fettinger (https://github.com/Oncorporation)  4/2019
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float elapsed_time;
+uniform float2 uv_offset;
+uniform float2 uv_scale;
+uniform float2 uv_pixel_interval;
+uniform float rand_f;
+uniform float2 uv_size;
+uniform string notes = "Opacity between 10 and 20 works. Adjust `Color` from white to fix environmental changes.\r\r\nUsage:\r\n1) Disable `Auto` settings like focus, white balance, etc.\r\n2) Take a video of just the background. \r\n3) Take a frame and use it as the background image. Windows Snipping Tool (%windir%\\system32\\SnippingTool.exe). \r\r\nThis eliminates differences based upon camera/video settings.";
+
+uniform texture2d target;
+uniform float4 color;
+uniform float opacity = 15.0;
+uniform bool invert;
+uniform bool Convert_709to601;
+uniform bool Convert_601to709;
+
+
+sampler_state textureSampler {
+	Filter    = Linear;
+	AddressU  = Clamp;
+	AddressV  = Clamp;
+};
+
+struct VertDataIn {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+struct VertDataOut {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+	float2 uv2 : TEXCOORD1;
+};
+
+//BT.601 to BT.709
+// Correct video colorspace BT.601 [SD] to BT.709 [HD] for HD video input
+// Use this shader only if BT.709 [HD] encoded video is incorrectly matrixed to full range RGB with the BT.601 [SD] colorspace.
+float4 Convert601to709(float4 rgba)
+{
+	float3 s1 = rgba.rgb;
+	s1 = s1.rrr * float3(0.299, -0.1495 / 0.886, 0.5) + s1.ggg * float3(0.587, -0.2935 / 0.886, -0.2935 / 0.701) + s1.bbb * float3(0.114, 0.5, -0.057 / 0.701); // RGB to Y'CbCr, BT.601 [SD] colorspace
+	return (s1.rrr + float3(0, -0.1674679 / 0.894, 1.8556) * s1.ggg + float3(1.5748, -0.4185031 / 0.894, 0) * s1.bbb).rgbb; // Y'CbCr to RGB output, BT.709 [HD] colorspace
+}
+
+//BT.709 to BT.601
+float4 Convert709to601(float4 rgba)
+{
+	float3 s1 = rgba.rgb;
+	s1 = float3(dot(float3(.2126, .7152, .0722), s1), dot(float3(-.1063 / .9278, -.3576 / .9278, .5), s1), dot(float3(.5, -.3576 / .7874, -.0361 / .7874), s1));
+	return float3(s1.x + 1.402*s1.z, dot(s1, float3(1, -.202008 / .587, -.419198 / .587)), s1.x + 1.772*s1.y).rgbb;
+}
+
+VertDataOut VSDefault(VertDataIn v_in)
+{
+	VertDataOut vert_out;
+	vert_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+	vert_out.uv  = v_in.uv;
+	vert_out.uv2 = v_in.uv * uv_scale + uv_offset;
+	return vert_out;
+}
+
+float4 PSColorMaskRGBA(VertDataOut v_in) : TARGET
+{
+	float Tolerance = opacity * 0.01;
+	float4 rgba = image.Sample(textureSampler, v_in.uv);
+
+	float4 targetRGB = target.Sample(textureSampler, v_in.uv2) * color;
+	if (invert){
+		targetRGB.rgb = 1.0 - targetRGB.rgb;
+	}
+	if (Convert_709to601)
+	{
+		rgba.rgb = Convert709to601(rgba);
+		targetRGB.rgb = Convert709to601(targetRGB);
+	}
+
+	if (Convert_601to709)
+	{
+		rgba.rgb = Convert601to709(rgba);
+		targetRGB.rbg = Convert601to709(targetRGB);
+	}	
+
+	float4 shadowRGB = targetRGB * targetRGB;
+
+	if ((abs(targetRGB.r - rgba.r) <= Tolerance &&
+		abs(targetRGB.g - rgba.g) <= Tolerance &&
+		abs(targetRGB.b - rgba.b) <= Tolerance)
+		|| (abs(shadowRGB.r - rgba.r) <= Tolerance &&
+			abs(shadowRGB.g - rgba.g) <= Tolerance &&
+			abs(shadowRGB.b - rgba.b) <= Tolerance))
+	{
+		rgba.rgba = 0;
+	}
+	return rgba;
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = VSDefault(v_in);
+		pixel_shader  = PSColorMaskRGBA(v_in);
+	}
+}
+
